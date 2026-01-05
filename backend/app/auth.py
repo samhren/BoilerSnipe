@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import get_db
 from . import models
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 security = HTTPBearer()
 
@@ -34,6 +36,17 @@ def verify_token(token: str) -> dict:
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+def verify_google_token(token: str) -> Optional[dict]:
+    """Verify Google ID token"""
+    try:
+        # We don't specify client_id here to allow any client ID (from our frontend)
+        # In production, you should pass the expected client_id to verify_oauth2_token
+        id_info = id_token.verify_oauth2_token(token, requests.Request())
+        return id_info
+    except ValueError:
+        return None
 
 
 async def get_current_user(

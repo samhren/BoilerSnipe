@@ -75,6 +75,42 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const googleLogin = async (token) => {
+    trackEvent(EVENTS.LOGIN_ATTEMPTED, { method: 'google' });
+    try {
+      const response = await authAPI.googleLogin(token);
+      const { access_token } = response.data;
+
+      localStorage.setItem('token', access_token);
+
+      // Get user info
+      const userResponse = await authAPI.getCurrentUser();
+      const userData = userResponse.data;
+
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // Identify user in PostHog
+      identifyUser(userData.id?.toString() || userData.email, {
+        email: userData.email,
+        method: 'google'
+      });
+      trackEvent(EVENTS.LOGIN_SUCCESS, { method: 'google' });
+
+      return { success: true };
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || 'Google login failed';
+      trackEvent(EVENTS.LOGIN_FAILED, {
+        method: 'google',
+        error: errorMessage,
+      });
+      return {
+        success: false,
+        error: errorMessage
+      };
+    }
+  };
+
   const register = async (userData) => {
     trackEvent(EVENTS.REGISTER_ATTEMPTED, { email_domain: userData.email.split('@')[1] });
     try {
@@ -105,7 +141,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, googleLogin, register, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

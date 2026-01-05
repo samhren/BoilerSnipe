@@ -36,6 +36,10 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class GoogleLoginRequest(BaseModel):
+    token: str
+
+
 # Course Schemas
 class CourseBase(BaseModel):
     crn: str

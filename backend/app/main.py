@@ -103,6 +103,62 @@ def login(request: Request, login_data: schemas.LoginRequest, db: Session = Depe
     return {"access_token": access_token, "token_type": "bearer"}
 
 
+@app.post("/api/auth/google", response_model=schemas.Token)
+@limiter.limit("10/minute")
+def google_login(request: Request, login_data: schemas.GoogleLoginRequest, db: Session = Depends(get_db)):
+    """Login with Google"""
+    # Verify Google token
+    id_info = auth.verify_google_token(login_data.token)
+    if not id_info:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Google token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    email = id_info.get("email")
+    google_id = id_info.get("sub")
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="Token does not contain email")
+
+    # Check if user exists
+    user = db.query(models.User).filter(models.User.email == email).first()
+    
+    if not user:
+        # Create new user
+        # We set a random password since they login with Google
+        import secrets
+        import string
+        alphabet = string.ascii_letters + string.digits
+        random_password = ''.join(secrets.choice(alphabet) for i in range(20))
+        
+        user = models.User(
+            email=email,
+            google_id=google_id,
+            hashed_password=models.User.hash_password(random_password)
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    else:
+        # Link google_id if not linked
+        if not user.google_id:
+            user.google_id = google_id
+            db.commit()
+
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+
+    # Create access token
+    access_token = auth.create_access_token(
+        data={"sub": str(user.id)},
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
 @app.get("/api/auth/me", response_model=schemas.UserResponse)
 def get_current_user_info(current_user: models.User = Depends(auth.get_current_user)):
     """Get current user information"""
