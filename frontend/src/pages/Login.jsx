@@ -39,6 +39,36 @@ const Login = () => {
         </div>
 
         <div className="card">
+          <div className="mb-6">
+            <div className="flex justify-center mb-6">
+              <GoogleLogin
+                onSuccess={async (credentialResponse) => {
+                  setLoading(true);
+                  const result = await googleLogin(credentialResponse.credential);
+                  if (result.success) {
+                    navigate('/dashboard');
+                  } else {
+                    setError(result.error);
+                  }
+                  setLoading(false);
+                }}
+                onError={() => {
+                  setError('Google Login Failed');
+                }}
+                useOneTap
+              />
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with email</span>
+              </div>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -85,35 +115,7 @@ const Login = () => {
             </button>
           </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
-              </div>
-            </div>
 
-            <div className="mt-6 flex justify-center">
-              <GoogleLogin
-                onSuccess={async (credentialResponse) => {
-                  setLoading(true);
-                  const result = await googleLogin(credentialResponse.credential);
-                  if (result.success) {
-                    navigate('/dashboard');
-                  } else {
-                    setError(result.error);
-                  }
-                  setLoading(false);
-                }}
-                onError={() => {
-                  setError('Google Login Failed');
-                }}
-                useOneTap
-              />
-            </div>
-          </div>
 
           <div className="mt-6 text-center text-sm text-gray-600">
             Don't have an account?{' '}
