@@ -49,22 +49,23 @@ def job_seat_sniper():
         print(f"Error in seat sniper job: {str(e)}")
 
 
-def check_and_seed_data():
-    """Check if database is empty and run initial scrape if so"""
-    print("\nChecking if initial seed is required...")
+def run_startup_scrape():
+    """Clear database and run initial scrape on startup"""
+    print("\n[STARTUP] Preparing for initial scrape...")
     db = SessionLocal()
     try:
-        # Check if any courses exist
-        # We wrap in try-except in case tables aren't created yet (though they should be)
+        # Check if tables exist
         if hasattr(models, 'Course'):
-            course_count = db.query(models.Course).count()
-            if course_count == 0:
-                print("Database is empty. Starting initial inventory scrape...")
-                job_inventory_scraper()
-            else:
-                print(f"Database contains {course_count} courses. Skipping initial scrape.")
+            print("[STARTUP] Clearing existing course data...")
+            # Delete all courses (cascade will handle tracks if configured, or we can be explicit)
+            db.query(models.Course).delete()
+            db.commit()
+            print("[STARTUP] Database cleared.")
+            
+            print("[STARTUP] Starting fresh inventory scrape...")
+            job_inventory_scraper()
     except Exception as e:
-        print(f"Warning: Could not check for seed data: {e}")
+        print(f"Warning: Startup scrape failed: {e}")
     finally:
         db.close()
 
@@ -100,8 +101,8 @@ def start_scheduler():
     print(f"  2. Seat Sniper: Every {settings.SNIPER_INTERVAL_MINUTES} minutes")
     print(f"\nScheduler started at {datetime.now()}")
     
-    # Check for seed data
-    check_and_seed_data()
+    # Run startup scrape (Clear DB + Scrape)
+    run_startup_scrape()
 
     print("="*60)
     print("\nPress Ctrl+C to stop\n")
