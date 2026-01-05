@@ -19,6 +19,14 @@ from bs4 import BeautifulSoup
 import shutil
 from selenium.webdriver.chrome.service import Service
 
+def run_command_debug(cmd):
+    import subprocess
+    try:
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        print(f"CMD '{cmd}':\n{result.stdout}")
+    except Exception as e:
+        print(f"CMD '{cmd}' failed: {e}")
+
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
@@ -40,13 +48,6 @@ class InventoryScraper:
 
 # ... (existing imports)
 
-def run_command_debug(cmd):
-    import subprocess
-    try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        print(f"CMD '{cmd}':\n{result.stdout}")
-    except Exception as e:
-        print(f"CMD '{cmd}' failed: {e}")
 
     def setup_driver(self):
         """Setup Chrome WebDriver with options"""
