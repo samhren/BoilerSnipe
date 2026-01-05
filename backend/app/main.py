@@ -15,7 +15,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-)
+
 
 # Trusted Host middleware (must be added before CORS)
 app.add_middleware(
