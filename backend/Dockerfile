@@ -27,5 +27,9 @@ COPY . .
 ENV CHROME_BIN=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
-# 7. Default Command (Shell form to allow variable expansion)
-CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips '*'
+# 7. Copy and executable permission for entrypoint
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+# 8. Run the entrypoint script
+CMD ["./entrypoint.sh"]
