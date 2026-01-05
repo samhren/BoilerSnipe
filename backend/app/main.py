@@ -160,6 +160,15 @@ def create_track(
     if not course:
         raise HTTPException(status_code=404, detail="Course not found. Course may need to be added to inventory first.")
 
+    # Check track limit
+    track_count = db.query(models.Track).filter(
+        models.Track.user_id == current_user.id,
+        models.Track.is_active == True
+    ).count()
+
+    if track_count >= 10:
+        raise HTTPException(status_code=400, detail="You can only track up to 10 courses.")
+
     # Check if already tracking
     existing_track = db.query(models.Track).filter(
         models.Track.user_id == current_user.id,
