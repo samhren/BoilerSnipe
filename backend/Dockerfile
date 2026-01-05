@@ -35,7 +35,7 @@ COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 # 8. Expose port for Railway internal networking
-EXPOSE 8000
+EXPOSE 8080
 
 # 9. Run the entrypoint script
 CMD ["./entrypoint.sh"]
