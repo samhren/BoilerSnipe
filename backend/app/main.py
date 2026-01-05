@@ -26,7 +26,9 @@ app.add_middleware(
 # CORS middleware
 origins = ["http://localhost:5173", "http://localhost:3000"]
 if settings.FRONTEND_URL:
-    origins.append(settings.FRONTEND_URL)
+    # Strip trailing slash if present to ensure exact match with Origin header
+    url = settings.FRONTEND_URL.rstrip("/")
+    origins.append(url)
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,6 +42,9 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     """Initialize database on startup"""
+    print(f"DEBUG: ALLOWED_HOSTS={settings.ALLOWED_HOSTS}")
+    print(f"DEBUG: FRONTEND_URL={settings.FRONTEND_URL}")
+    print(f"DEBUG: CORS Origins={origins}")
     init_db()
 
 
