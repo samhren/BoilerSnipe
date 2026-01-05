@@ -1,19 +1,29 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import timedelta
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from .database import get_db, init_db
 from . import models, schemas, auth
 from .config import settings
+
+# Rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="BoilerSnipe API",
     description="Track Purdue course seat availability and get notified instantly",
     version="1.0.0"
 )
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 
@@ -34,8 +44,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 
@@ -50,7 +60,8 @@ async def startup_event():
 
 # Authentication Endpoints
 @app.post("/api/auth/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
-def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+def register(request: Request, user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
     # Check if user exists
     existing_user = db.query(models.User).filter(models.User.email == user_data.email).first()
@@ -70,7 +81,8 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
 
 
 @app.post("/api/auth/login", response_model=schemas.Token)
-def login(login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def login(request: Request, login_data: schemas.LoginRequest, db: Session = Depends(get_db)):
     """Login and get access token"""
     user = auth.authenticate_user(db, login_data.email, login_data.password)
     if not user:
@@ -96,7 +108,9 @@ def get_current_user_info(current_user: models.User = Depends(auth.get_current_u
 
 # Course Endpoints
 @app.get("/api/courses", response_model=List[schemas.CourseResponse])
+@limiter.limit("60/minute")
 def search_courses(
+    request: Request,
     query: str = "",
     term_code: str = None,
     db: Session = Depends(get_db)
@@ -130,7 +144,9 @@ def get_course_by_crn(crn: str, db: Session = Depends(get_db)):
 
 # Track Endpoints
 @app.post("/api/tracks", response_model=schemas.TrackResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("30/minute")
 def create_track(
+    request: Request,
     track_data: schemas.TrackCreate,
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
@@ -150,6 +166,10 @@ def create_track(
     if existing_track:
         if not existing_track.is_active:
             existing_track.is_active = True
+            # Reset last_seats to current value to prevent false notifications
+            existing_track.last_seats = course.seats_remaining
+            existing_track.notify_on_open = track_data.notify_on_open
+            existing_track.notify_on_close = track_data.notify_on_close
             db.commit()
             db.refresh(existing_track)
             return existing_track
@@ -175,11 +195,13 @@ def create_track(
             sniper = SeatSniper()
             seat_data = sniper.check_seat_availability(course.crn, course.term_code)
             if seat_data:
-                # Update directly in our session
+                # Update course in our session
                 course.seats_capacity = seat_data['seats_capacity']
                 course.seats_available = seat_data['seats_available']
                 course.seats_remaining = seat_data['seats_remaining']
                 course.last_checked = seat_data['last_checked']
+                # Also update track's last_seats to prevent false notification
+                new_track.last_seats = seat_data['seats_remaining']
                 db.commit()
             sniper.close()
             db.refresh(course)

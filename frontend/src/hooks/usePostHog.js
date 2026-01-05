@@ -4,11 +4,11 @@ import { useLocation } from 'react-router-dom';
 
 // Initialize PostHog
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY;
-const POSTHOG_HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
 
 if (POSTHOG_KEY) {
   posthog.init(POSTHOG_KEY, {
-    api_host: POSTHOG_HOST,
+    api_host: "https://e.boilersnipe.com",
+    ui_url: "https://us.posthog.com",
     capture_pageview: false, // We'll capture manually for SPA
     capture_pageleave: true,
     persistence: 'localStorage',

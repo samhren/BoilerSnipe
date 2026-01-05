@@ -18,3 +18,4 @@ alembic==1.13.1
 psycopg2-binary==2.9.9
 gunicorn==21.2.0
 resend==2.6.0
+slowapi==0.1.9
