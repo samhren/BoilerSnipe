@@ -50,25 +50,15 @@ def job_seat_sniper():
 
 
 def run_startup_scrape():
-    """Clear database and run initial scrape on startup"""
-    print("\n[STARTUP] Preparing for initial scrape...", flush=True)
-    db = SessionLocal()
+    """Run initial scrape on startup to update course inventory"""
+    print("\n[STARTUP] Preparing for initial update scrape...", flush=True)
     try:
-        # Check if tables exist
-        if hasattr(models, 'Course'):
-            print("[STARTUP] Clearing existing course data...", flush=True)
-            # Delete all courses (cascade will handle tracks if configured, or we can be explicit)
-            db.query(models.Course).delete()
-            db.commit()
-            print("[STARTUP] Database cleared.", flush=True)
-            
-            print("[STARTUP] Starting fresh inventory scrape...", flush=True)
-            job_inventory_scraper()
-            print("[STARTUP] Initial scrape completed successfully.", flush=True)
+        # We perform an upsert scrape, preserving existing user tracks/data
+        print("[STARTUP] Starting inventory update...", flush=True)
+        job_inventory_scraper()
+        print("[STARTUP] Initial update completed successfully.", flush=True)
     except Exception as e:
         print(f"Warning: Startup scrape failed: {e}", flush=True)
-    finally:
-        db.close()
 
 
 def start_scheduler():
