@@ -189,14 +189,18 @@ class InventoryScraper:
                 print(f"  - Waiting for search form...")
                 wait.until(EC.presence_of_element_located((By.ID, "subj_id")))
 
-                # Wait for options to populate (fixes race condition in slower environments)
-                def options_populated(d):
+                # Wait specifically for the target subject to be present in the options
+                # This ensures the specific subject list has loaded for the selected term
+                def subject_option_present(d):
                     try:
                         sel = Select(d.find_element(By.ID, "subj_id"))
-                        return len(sel.options) > 1
+                        for opt in sel.options:
+                            if opt.get_attribute("value") == subject:
+                                return True
+                        return False
                     except:
                         return False
-                wait.until(options_populated)
+                wait.until(subject_option_present)
 
                 print(f"  - Selecting subject {subject}...")
                 subject_select = Select(self.driver.find_element(By.ID, "subj_id"))
