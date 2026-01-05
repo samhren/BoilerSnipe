@@ -25,9 +25,8 @@ class Settings(BaseSettings):
     # CORS
     FRONTEND_URL: Optional[str] = None
     
-    # Security
-    # Security
-    ALLOWED_HOSTS: str = "localhost,127.0.0.1"
+    # Security - use "*" when behind a reverse proxy
+    ALLOWED_HOSTS: str = "*"
 
     class Config:
         env_file = ".env"

@@ -28,10 +28,13 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # Trusted Host middleware (must be added before CORS)
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=[host.strip() for host in settings.ALLOWED_HOSTS.split(",")]
-)
+# Allow all hosts when behind a reverse proxy, or use ALLOWED_HOSTS for direct access
+allowed_hosts = [host.strip() for host in settings.ALLOWED_HOSTS.split(",")]
+if "*" not in allowed_hosts:
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=allowed_hosts
+    )
 
 # CORS middleware
 origins = ["http://localhost:5173", "http://localhost:3000"]

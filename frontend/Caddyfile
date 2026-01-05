@@ -1,0 +1,13 @@
+:{$PORT}
+
+# Proxy API requests to backend
+handle /api/* {
+	reverse_proxy {$BACKEND_URL}
+}
+
+# Serve static files for everything else
+handle {
+	root * /srv
+	try_files {path} /index.html
+	file_server
+}
