@@ -93,7 +93,7 @@ def start_scheduler():
     print(f"\nScheduler started at {datetime.now()}")
     
     # Run startup scrape (Clear DB + Scrape)
-    run_startup_scrape()
+    # run_startup_scrape()
 
     print("="*60)
     print("\nPress Ctrl+C to stop\n")
