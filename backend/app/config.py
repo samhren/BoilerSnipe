@@ -26,14 +26,8 @@ class Settings(BaseSettings):
     FRONTEND_URL: Optional[str] = None
     
     # Security
-    ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1"]
-
-    @field_validator("ALLOWED_HOSTS", mode="before")
-    @classmethod
-    def parse_allowed_hosts(cls, v):
-        if isinstance(v, str):
-            return [host.strip() for host in v.split(",")]
-        return v
+    # Security
+    ALLOWED_HOSTS: str = "localhost,127.0.0.1"
 
     class Config:
         env_file = ".env"
