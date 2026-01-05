@@ -2,7 +2,11 @@
 
 # Proxy API requests to backend
 handle /api/* {
-	reverse_proxy {$BACKEND_URL}
+	reverse_proxy {$BACKEND_URL} {
+		transport http {
+			dial_timeout 10s
+		}
+	}
 }
 
 # Serve static files for everything else
