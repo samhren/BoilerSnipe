@@ -12,6 +12,12 @@ RUN npm ci
 # Copy source files
 COPY . .
 
+# Build arguments
+ARG VITE_GOOGLE_CLIENT_ID
+ARG VITE_POSTHOG_KEY
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID \
+    VITE_POSTHOG_KEY=$VITE_POSTHOG_KEY
+
 # Build the app
 RUN npm run build
 
