@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     INVENTORY_CRON: str = "0 2 * * *"  # Daily at 2 AM
     SNIPER_INTERVAL_MINUTES: float = 5
 
+    # CORS
+    FRONTEND_URL: Optional[str] = None
+
     class Config:
         env_file = ".env"
         case_sensitive = True
