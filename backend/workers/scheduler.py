@@ -31,7 +31,7 @@ def job_inventory_scraper():
         run_inventory_scraper(
             term_code="202620",  # Spring 2026
             term_name="Spring 2026",
-            subjects=["MA", "CS", "ECON", "STAT", "PHYS", "CHEM"]
+            subjects=["AAE", "AAS", "ABE", "AD", "AFT", "AGEC", "AGR", "AGRY", "AMST", "ANSC", "ANTH", "ARAB", "ARCH", "ASAM", "ASEC", "ASL", "ASM", "ASTR", "AT", "BAND", "BCHM", "BIOL", "BME", "BMS", "BTNY", "CAND", "CDIS", "CE", "CEM", "CGT", "CHE", "CHM", "CHNS", "CIT", "CLCS", "CLPH", "CM", "CMGT", "CMPL", "CNIT", "COM", "CPB", "CS", "CSCI", "CSR", "DANC", "DCTC", "EAPS", "ECE", "ECET", "ECON", "EDCI", "EDPS", "EDST", "EEE", "ENE", "ENGL", "ENGR", "ENGT", "ENTM", "ENTR", "EPCS", "EXPL", "FLM", "FMGT", "FNR", "FR", "FS", "GEOL", "GEP", "GER", "GRAD", "GREK", "GS", "GSLA", "HDFS", "HEBR", "HER", "HETM", "HHS", "HIST", "HK", "HONR", "HORT", "HSCI", "HSOP", "HTM", "IDE", "IDIS", "IE", "IET", "ILS", "IMPH", "INFO", "INT", "ITAL", "JPNS", "KOR", "LA", "LALS", "LATN", "LC", "LING", "MA", "MATH", "MCMP", "ME", "MET", "MFET", "MGMT", "MIL", "MSE", "MSL", "MSPE", "MUS", "NRES", "NS", "NUCL", "NUR", "NUTR", "OBHR", "OLS", "PES", "PHIL", "PHPR", "PHRM", "PHSC", "PHST", "PHYS", "POL", "PSY", "PTGS", "PUBH", "REG", "REL", "RPMP", "RUSS", "SCI", "SCLA", "SFS", "SLHS", "SOC", "SPAN", "STAT", "SYS", "TCM", "TDM", "TECH", "THTR", "TLI", "VCS", "VIP", "VM", "WGSS"]
         )
     except Exception as e:
         print(f"Error in inventory scraper job: {str(e)}")
