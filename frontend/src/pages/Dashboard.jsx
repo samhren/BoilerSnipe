@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { tracksAPI } from '../services/api';
 import TrackCard from '../components/TrackCard';
+import WeeklySchedule from '../components/WeeklySchedule';
 import { trackEvent, EVENTS } from '../hooks/usePostHog';
 
 const Dashboard = () => {
@@ -123,6 +124,9 @@ const Dashboard = () => {
             <div className="text-slate-500 text-xs sm:text-sm mt-1">Full</div>
           </div>
         </div>
+
+        {/* Weekly Schedule */}
+        {!loading && tracks.length > 0 && <WeeklySchedule tracks={tracks} />}
 
         {/* Error */}
         {error && (
