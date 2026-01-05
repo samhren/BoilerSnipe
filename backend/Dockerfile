@@ -1,6 +1,9 @@
 # Use python 3.10-slim to match our project version
 FROM python:3.10-slim
 
+# Ensure Python logs are streamed to stdout/stderr immediately
+ENV PYTHONUNBUFFERED=1
+
 # 1. Install Chrome, ChromeDriver, and system dependencies
 # We include curl/wget/gnupg just in case, and build-essential for some python packages
 RUN apt-get update && apt-get install -y \
