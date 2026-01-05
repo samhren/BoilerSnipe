@@ -13,6 +13,8 @@ from datetime import datetime
 sys.path.append(str(Path(__file__).parent.parent))
 
 from app.config import settings
+from app.database import SessionLocal
+from app import models
 from .inventory_scraper import run_inventory_scraper
 from .sniper import run_sniper
 
@@ -47,6 +49,26 @@ def job_seat_sniper():
         print(f"Error in seat sniper job: {str(e)}")
 
 
+def check_and_seed_data():
+    """Check if database is empty and run initial scrape if so"""
+    print("\nChecking if initial seed is required...")
+    db = SessionLocal()
+    try:
+        # Check if any courses exist
+        # We wrap in try-except in case tables aren't created yet (though they should be)
+        if hasattr(models, 'Course'):
+            course_count = db.query(models.Course).count()
+            if course_count == 0:
+                print("Database is empty. Starting initial inventory scrape...")
+                job_inventory_scraper()
+            else:
+                print(f"Database contains {course_count} courses. Skipping initial scrape.")
+    except Exception as e:
+        print(f"Warning: Could not check for seed data: {e}")
+    finally:
+        db.close()
+
+
 def start_scheduler():
     """Start the background job scheduler"""
     scheduler = BlockingScheduler()
@@ -77,6 +99,10 @@ def start_scheduler():
     print(f"  1. Inventory Scraper: {settings.INVENTORY_CRON} (Daily at 2 AM)")
     print(f"  2. Seat Sniper: Every {settings.SNIPER_INTERVAL_MINUTES} minutes")
     print(f"\nScheduler started at {datetime.now()}")
+    
+    # Check for seed data
+    check_and_seed_data()
+
     print("="*60)
     print("\nPress Ctrl+C to stop\n")
 
