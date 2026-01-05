@@ -1,8 +1,0 @@
-[phases.setup]
-nixPkgs = ["python310", "chromium", "chromedriver", "glib", "nss", "nspr", "atk", "at-spi2-atk", "cups", "dbus", "libdrm", "libxkbcommon", "libxcomposite", "libxdamage", "libxrandr", "mesa", "pango", "cairo"]
-
-[phases.install]
-cmds = ["pip install -r requirements.txt"]
-
-[start]
-cmd = "uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips '*'"
