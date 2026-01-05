@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="#1a1a1a" stroke="#CFB991" stroke-width="3"/>
+
+  <!-- Target rings -->
+  <circle cx="50" cy="50" r="35" fill="none" stroke="#CFB991" stroke-width="3"/>
+  <circle cx="50" cy="50" r="20" fill="none" stroke="#CFB991" stroke-width="3"/>
+
+  <!-- Center dot -->
+  <circle cx="50" cy="50" r="6" fill="#CFB991"/>
+
+  <!-- Crosshair lines -->
+  <line x1="50" y1="5" x2="50" y2="25" stroke="#CFB991" stroke-width="3" stroke-linecap="round"/>
+  <line x1="50" y1="75" x2="50" y2="95" stroke="#CFB991" stroke-width="3" stroke-linecap="round"/>
+  <line x1="5" y1="50" x2="25" y2="50" stroke="#CFB991" stroke-width="3" stroke-linecap="round"/>
+  <line x1="75" y1="50" x2="95" y2="50" stroke="#CFB991" stroke-width="3" stroke-linecap="round"/>
+</svg>

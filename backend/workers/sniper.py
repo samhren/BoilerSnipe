@@ -1,0 +1,308 @@
+"""
+Seat Sniper (Phase 2)
+Fast, lightweight seat checker using requests instead of Selenium.
+Runs every 5 minutes and only checks CRNs that users are actively tracking.
+"""
+
+import re
+import sys
+import requests
+from pathlib import Path
+from datetime import datetime
+from typing import Dict, Optional, List
+from bs4 import BeautifulSoup
+
+# Add parent directory to path for imports
+sys.path.append(str(Path(__file__).parent.parent))
+
+from app.database import SessionLocal
+from app.models import Course, Track, User, NotificationLog
+from app.config import settings
+
+
+class SeatSniper:
+    """Checks seat availability for tracked courses"""
+
+    DETAIL_URL_TEMPLATE = (
+        "https://selfservice.mypurdue.purdue.edu/prod/"
+        "bwckschd.p_disp_detail_sched?term_in={term_code}&crn_in={crn}"
+    )
+
+    def __init__(self, use_proxy: bool = False):
+        """Initialize the sniper"""
+        self.db = SessionLocal()
+        self.use_proxy = use_proxy
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+        })
+
+        # Setup proxy if configured
+        if use_proxy and settings.PROXY_URL:
+            self.session.proxies = {
+                'http': settings.PROXY_URL,
+                'https': settings.PROXY_URL
+            }
+
+    def check_seat_availability(self, crn: str, term_code: str) -> Optional[Dict]:
+        """
+        Check seat availability for a specific CRN.
+
+        Returns:
+            Dict with seat information or None if failed
+        """
+        url = self.DETAIL_URL_TEMPLATE.format(term_code=term_code, crn=crn)
+
+        try:
+            response = self.session.get(url, timeout=10)
+            response.raise_for_status()
+
+            # Parse HTML
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # Find the Registration Availability table
+            # Look for table header containing "Registration Availability"
+            seat_data = self._parse_seat_info(soup)
+
+            if seat_data:
+                seat_data['last_checked'] = datetime.now()
+                return seat_data
+
+        except requests.RequestException as e:
+            print(f"Error checking CRN {crn}: {str(e)}")
+
+        return None
+
+    def _parse_seat_info(self, soup: BeautifulSoup) -> Optional[Dict]:
+        """
+        Parse seat information from the course detail page.
+
+        The page has a table with header "Registration Availability"
+        with columns: Capacity | Actual | Remaining
+        and a row starting with "Seats" containing the values.
+        """
+        try:
+            # Find all tables
+            tables = soup.find_all('table', class_='datadisplaytable')
+
+            for table in tables:
+                # Look for "Registration Availability" header
+                caption = table.find('caption', class_='captiontext')
+                if caption and 'Registration Availability' in caption.get_text():
+                    # Found the right table, now parse the seat row
+                    rows = table.find_all('tr')
+
+                    for row in rows:
+                        # Look for the "Seats" row (not "Waitlist Seats")
+                        th = row.find('th')
+                        if th and th.get_text().strip() == 'Seats':
+                            # Get all td cells in this row
+                            cells = row.find_all('td')
+                            if len(cells) >= 3:
+                                return {
+                                    'seats_capacity': int(cells[0].get_text().strip()),
+                                    'seats_available': int(cells[1].get_text().strip()),
+                                    'seats_remaining': int(cells[2].get_text().strip()),
+                                }
+
+        except Exception as e:
+            print(f"Error parsing seat info: {str(e)}")
+
+        return None
+
+    def update_course_seats(self, course: Course, seat_data: Dict):
+        """Update course seat information in database"""
+        try:
+            course.seats_capacity = seat_data['seats_capacity']
+            course.seats_available = seat_data['seats_available']
+            course.seats_remaining = seat_data['seats_remaining']
+            course.last_checked = seat_data['last_checked']
+
+            self.db.commit()
+
+        except Exception as e:
+            print(f"Error updating course {course.crn}: {str(e)}")
+            self.db.rollback()
+
+    def process_track_notifications(self, track: Track, old_seats: int, new_seats: int):
+        """
+        Process notifications for a track based on seat changes.
+
+        Args:
+            track: The Track object
+            old_seats: Previous seat count
+            new_seats: Current seat count
+        """
+        # Determine if we need to notify
+        notify = False
+        notification_type = None
+
+        # Seat opened (was 0, now > 0)
+        if old_seats == 0 and new_seats > 0 and track.notify_on_open:
+            notify = True
+            notification_type = "seat_open"
+            track.last_status = "open"
+
+        # Seat closed (was > 0, now 0)
+        elif old_seats > 0 and new_seats == 0 and track.notify_on_close:
+            notify = True
+            notification_type = "seat_closed"
+            track.last_status = "closed"
+
+        # Update track status
+        track.last_seats = new_seats
+        track.last_checked = datetime.now()
+
+        if notify:
+            track.last_notified = datetime.now()
+            self.send_notification(track, notification_type, new_seats)
+
+        self.db.commit()
+
+    def send_notification(self, track: Track, notification_type: str, seats: int):
+        """
+        Send notification via Telegram.
+
+        Args:
+            track: The Track object
+            notification_type: "seat_open" or "seat_closed"
+            seats: Number of seats available
+        """
+        # Import here to avoid circular dependency
+        from .notifier import send_telegram_notification
+
+        try:
+            user = track.user
+            course = track.course
+
+            # Create message
+            if notification_type == "seat_open":
+                message = (
+                    f"🎯 SEAT OPEN! {course.course_code} - {course.title}\n"
+                    f"CRN: {course.crn}\n"
+                    f"Seats available: {seats}\n"
+                    f"Time: {course.time} {course.days}\n"
+                    f"Instructor: {course.instructor}"
+                )
+            else:
+                message = (
+                    f"⚠️ Seat closed: {course.course_code} - {course.title}\n"
+                    f"CRN: {course.crn}\n"
+                    f"All seats filled."
+                )
+
+            # Send Telegram message
+            success, error = send_telegram_notification(user.telegram_chat_id, message)
+
+            # Log notification
+            log = NotificationLog(
+                user_id=user.id,
+                course_id=course.id,
+                notification_type=notification_type,
+                message=message,
+                telegram_chat_id=user.telegram_chat_id,
+                status="sent" if success else "failed",
+                error_message=error
+            )
+            self.db.add(log)
+            self.db.commit()
+
+            if success:
+                print(f"  ✓ Sent {notification_type} notification for CRN {course.crn} to {user.email}")
+            else:
+                print(f"  ✗ Failed to send notification: {error}")
+
+        except Exception as e:
+            print(f"  ✗ Error sending notification: {str(e)}")
+
+    def run_check_cycle(self):
+        """Run a complete check cycle for all tracked courses"""
+        print(f"Starting Seat Sniper check cycle at {datetime.now()}")
+        print("-" * 60)
+
+        # Get all active tracks with their courses
+        active_tracks = self.db.query(Track).filter(
+            Track.is_active == True
+        ).all()
+
+        if not active_tracks:
+            print("No active tracks found.")
+            return
+
+        # Group tracks by CRN to avoid duplicate checks
+        crn_tracks = {}
+        for track in active_tracks:
+            crn = track.course.crn
+            if crn not in crn_tracks:
+                crn_tracks[crn] = []
+            crn_tracks[crn].append(track)
+
+        print(f"Checking {len(crn_tracks)} unique courses for {len(active_tracks)} total tracks...")
+
+        checked = 0
+        notifications_sent = 0
+
+        for crn, tracks in crn_tracks.items():
+            course = tracks[0].course  # All tracks share the same course
+            old_seats = course.seats_remaining
+
+            print(f"Checking CRN {crn} ({course.course_code})...")
+
+            # Check seat availability
+            seat_data = self.check_seat_availability(crn, course.term_code)
+
+            if seat_data:
+                new_seats = seat_data['seats_remaining']
+                print(f"  Seats: {new_seats}/{seat_data['seats_capacity']} available")
+
+                # Update course in database
+                self.update_course_seats(course, seat_data)
+
+                # Process notifications for all tracks of this course
+                for track in tracks:
+                    old_track_seats = track.last_seats
+                    self.process_track_notifications(track, old_track_seats, new_seats)
+
+                    # Count notifications
+                    if (old_track_seats == 0 and new_seats > 0 and track.notify_on_open) or \
+                       (old_track_seats > 0 and new_seats == 0 and track.notify_on_close):
+                        notifications_sent += 1
+
+                checked += 1
+            else:
+                print(f"  Failed to check seats")
+
+        print("-" * 60)
+        print(f"Check cycle complete!")
+        print(f"  - Courses checked: {checked}/{len(crn_tracks)}")
+        print(f"  - Notifications sent: {notifications_sent}")
+
+    def close(self):
+        """Clean up resources"""
+        if self.session:
+            self.session.close()
+        if self.db:
+            self.db.close()
+
+    def __enter__(self):
+        """Context manager entry"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit"""
+        self.close()
+
+
+def run_sniper():
+    """Main function to run the seat sniper"""
+    try:
+        with SeatSniper(use_proxy=False) as sniper:
+            sniper.run_check_cycle()
+
+    except Exception as e:
+        print(f"Error running seat sniper: {str(e)}")
+        raise
+
+
+if __name__ == "__main__":
+    run_sniper()
