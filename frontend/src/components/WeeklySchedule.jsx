@@ -41,6 +41,7 @@ const WeeklySchedule = ({ tracks, onEventClick }) => {
                         id: track.id,
                         courseCode: course.course_code,
                         title: course.title,
+                        instructor: course.instructor, // Add instructor
                         dayIndex,
                         startMinutes,
                         duration: endMinutes - startMinutes,
@@ -82,56 +83,57 @@ const WeeklySchedule = ({ tracks, onEventClick }) => {
                     })}
                 </div>
 
-                {/* Days Grid */}
-                <div className="flex-1 relative flex">
-                    {DAYS_FULL.map((day, dayIdx) => (
-                        <div key={day} className="flex-1 relative border-r border-slate-50 last:border-0">
-                            {/* Day Header */}
-                            <div className="text-center text-xs font-semibold text-slate-600 uppercase py-1 border-b border-slate-100 bg-slate-50/50 absolute top-0 w-full z-10 h-6">
-                                {window.innerWidth < 640 ? day.slice(0, 1) : day.slice(0, 3)}
-                            </div>
+                {/* Days Grid - Scrollable on mobile */}
+                <div className="flex-1 relative overflow-x-auto no-scrollbar">
+                    <div className="flex min-w-[600px] h-full relative">
+                        {DAYS_FULL.map((day, dayIdx) => (
+                            <div key={day} className="flex-1 relative border-r border-slate-50 last:border-0">
+                                {/* Day Header */}
+                                <div className="text-center text-xs font-semibold text-slate-600 uppercase py-1 border-b border-slate-100 bg-slate-50/50 absolute top-0 w-full z-10 h-6">
+                                    {window.innerWidth < 640 ? day.slice(0, 1) : day.slice(0, 3)}
+                                </div>
 
-                            {/* Horizontal Grid Lines */}
-                            <div className="absolute inset-0 pt-6">
-                                {Array.from({ length: TOTAL_HOURS }).map((_, i) => (
-                                    <div
-                                        key={i}
-                                        className="absolute w-full border-b border-slate-50"
-                                        style={{ top: `${(i / TOTAL_HOURS) * 100}%` }}
-                                    ></div>
-                                ))}
-                            </div>
+                                {/* Horizontal Grid Lines */}
+                                <div className="absolute inset-0 pt-6">
+                                    {Array.from({ length: TOTAL_HOURS }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className="absolute w-full border-b border-slate-50"
+                                            style={{ top: `${(i / TOTAL_HOURS) * 100}%` }}
+                                        ></div>
+                                    ))}
+                                </div>
 
-                            {/* Events for this day */}
-                            <div className="absolute inset-0 pt-6">
-                                {scheduleData
-                                    .filter(event => event.dayIndex === dayIdx)
-                                    .map((event, idx) => {
-                                        const totalDayMinutes = TOTAL_HOURS * 60;
-                                        const displayStartMinutes = START_HOUR * 60;
-                                        const relativeStart = Math.max(0, event.startMinutes - displayStartMinutes);
-                                        const top = (relativeStart / totalDayMinutes) * 100;
-                                        const height = (event.duration / totalDayMinutes) * 100;
+                                {/* Events for this day */}
+                                <div className="absolute inset-0 pt-6">
+                                    {scheduleData
+                                        .filter(event => event.dayIndex === dayIdx)
+                                        .map((event, idx) => {
+                                            const totalDayMinutes = TOTAL_HOURS * 60;
+                                            const displayStartMinutes = START_HOUR * 60;
+                                            const relativeStart = Math.max(0, event.startMinutes - displayStartMinutes);
+                                            const top = (relativeStart / totalDayMinutes) * 100;
+                                            const height = (event.duration / totalDayMinutes) * 100;
 
-                                        return (
-                                            <div
-                                                key={`${event.id}-${idx}`}
-                                                onClick={() => onEventClick && onEventClick(event.id)}
-                                                className={`absolute inset-x-0.5 rounded px-1 py-0.5 border text-[10px] sm:text-xs overflow-hidden hover:z-20 hover:ring-2 hover:ring-indigo-400 hover:shadow-lg transition-all cursor-pointer ${event.color}`}
-                                                style={{
-                                                    top: `${top}%`,
-                                                    height: `${height}%`,
-                                                }}
-                                                title={`${event.courseCode}: ${event.title}`}
-                                            >
-                                                <div className="font-bold truncate leading-tight">{event.courseCode}</div>
-                                                <div className="truncate opacity-75 hidden sm:block leading-tight">{event.title}</div>
-                                            </div>
-                                        );
-                                    })}
+                                            return (
+                                                <div
+                                                    key={`${event.id}-${idx}`}
+                                                    onClick={() => onEventClick && onEventClick(event.id)}
+                                                    className={`absolute inset-x-0.5 rounded px-1 py-0.5 border text-[10px] sm:text-xs overflow-hidden hover:z-20 hover:ring-2 hover:ring-indigo-400 hover:shadow-lg transition-all cursor-pointer ${event.color}`}
+                                                    style={{
+                                                        top: `${top}%`,
+                                                        height: `${height}%`,
+                                                    }}
+                                                >
+                                                    <div className="font-bold truncate leading-tight">{event.courseCode}</div>
+                                                    <div className="truncate opacity-75 hidden sm:block leading-tight text-[9px] sm:text-[10px]">{event.instructor}</div>
+                                                </div>
+                                            );
+                                        })}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
