@@ -42,13 +42,27 @@ class InventoryScraper:
 
     def setup_driver(self):
         """Setup Chrome WebDriver with options"""
+        import os
+        print(f"DEBUG: PATH={os.environ.get('PATH')}")
+        
         chrome_options = Options()
         
         # Determine binary location (useful for Railway/Nixpacks)
-        chrome_bin = shutil.which("chromium") or shutil.which("google-chrome") or shutil.which("google-chrome-stable")
+        # Check multiple possible names
+        chrome_bins = ["chromium", "google-chrome", "google-chrome-stable", "chromium-browser"]
+        chrome_bin = None
+        
+        for name in chrome_bins:
+            path = shutil.which(name)
+            if path:
+                chrome_bin = path
+                break
+                
         if chrome_bin:
             print(f"Found Chrome binary at: {chrome_bin}")
             chrome_options.binary_location = chrome_bin
+        else:
+            print("WARNING: Could not find Chrome binary in PATH!")
         
         if self.headless:
             # Use new headless mode for better stability
@@ -63,18 +77,48 @@ class InventoryScraper:
         )
 
         # Check for system chromedriver
-        chromedriver_bin = shutil.which("chromedriver")
+        # Nixpacks often installs it as 'chromedriver' but let's check variations
+        driver_bins = ["chromedriver", "chromium.chromedriver", "chromium-driver"]
+        chromedriver_bin = None
+        
+        for name in driver_bins:
+            path = shutil.which(name)
+            if path:
+                chromedriver_bin = path
+                break
+        
         service = None
         if chromedriver_bin:
             print(f"Found ChromeDriver binary at: {chromedriver_bin}")
             service = Service(executable_path=chromedriver_bin)
-
-        if service:
-            self.driver = webdriver.Chrome(service=service, options=chrome_options)
         else:
-            self.driver = webdriver.Chrome(options=chrome_options)
+             print("WARNING: Could not find ChromeDriver binary in PATH! Selenium will try to download one.")
+
+        try:
+            if service:
+                self.driver = webdriver.Chrome(service=service, options=chrome_options)
+            else:
+                self.driver = webdriver.Chrome(options=chrome_options)
+        except Exception as e:
+            print(f"Failed to initialize WebDriver: {e}")
+            print("Listing /usr/bin and /nix/store (if accessible) to help debug:")
+            try:
+                # Debug: try to find where binaries might be hiding
+                run_command_debug("ls -F /usr/bin | grep chrome")
+                run_command_debug("ls -F /usr/bin | grep chromium")
+            except:
+                pass
+            raise e
             
         self.driver.set_page_load_timeout(60)
+
+def run_command_debug(cmd):
+    import subprocess
+    try:
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        print(f"CMD '{cmd}':\n{result.stdout}")
+    except Exception as e:
+        print(f"CMD '{cmd}' failed: {e}")
 
     def extract_crn_from_title(self, title: str) -> Optional[str]:
         """
