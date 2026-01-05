@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi import FastAPI, Depends, HTTPException, status, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.orm import Session
@@ -11,6 +11,7 @@ from slowapi.errors import RateLimitExceeded
 from .database import get_db, init_db
 from . import models, schemas, auth
 from .config import settings
+from workers.notifier import send_welcome_email
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -64,7 +65,7 @@ async def startup_event():
 # Authentication Endpoints
 @app.post("/api/auth/register", response_model=schemas.UserResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
-def register(request: Request, user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+def register(request: Request, user_data: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Register a new user"""
     # Check if user exists
     existing_user = db.query(models.User).filter(models.User.email == user_data.email).first()
@@ -79,6 +80,9 @@ def register(request: Request, user_data: schemas.UserCreate, db: Session = Depe
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    
+    # Send welcome email
+    background_tasks.add_task(send_welcome_email, user_data.email)
 
     return new_user
 
@@ -105,7 +109,7 @@ def login(request: Request, login_data: schemas.LoginRequest, db: Session = Depe
 
 @app.post("/api/auth/google", response_model=schemas.Token)
 @limiter.limit("10/minute")
-def google_login(request: Request, login_data: schemas.GoogleLoginRequest, db: Session = Depends(get_db)):
+def google_login(request: Request, login_data: schemas.GoogleLoginRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Login with Google"""
     # Verify Google token
     id_info = auth.verify_google_token(login_data.token)
@@ -141,6 +145,9 @@ def google_login(request: Request, login_data: schemas.GoogleLoginRequest, db: S
         db.add(user)
         db.commit()
         db.refresh(user)
+        
+        # Send welcome email for new Google users
+        background_tasks.add_task(send_welcome_email, email)
     else:
         # Link google_id if not linked
         if not user.google_id:

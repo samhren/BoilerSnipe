@@ -80,6 +80,33 @@ def test_notification(to_email: str):
         print(f"✗ Failed to send test notification: {error}")
 
 
+def send_welcome_email(to_email: str):
+    """
+    Send a welcome email to a new user.
+    """
+    subject = "Welcome to BoilerSnipe! 🚂"
+    html_content = """
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; line-height: 1.6;">
+        <h2 style="color: #CFB991; background-color: #000000; padding: 10px; border-radius: 5px;">Welcome to BoilerSnipe!</h2>
+        <p>Hey there! 👋</p>
+        <p>Thanks for creating an account. You're now ready to snipe those elusive open seats.</p>
+        
+        <h3>How it works:</h3>
+        <ol>
+            <li><b>Search</b> for the course you want to get into.</li>
+            <li><b>Track</b> the course by clicking the bell icon.</li>
+            <li><b>Wait</b> - we'll send you an email the moment a seat opens up!</li>
+        </ol>
+        
+        <p>Happy hunting,</p>
+        <p>The BoilerSnipe Team</p>
+        <p style="font-size: 12px; color: #888;">P.S. Make sure to check your spam folder and mark us as safe so you don't miss an alert.</p>
+    </div>
+    """
+    print(f"Sending welcome email to {to_email}...")
+    send_email_notification(to_email, subject, html_content)
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         test_email = sys.argv[1]
