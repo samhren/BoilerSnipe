@@ -35,20 +35,46 @@ class InventoryScraper:
         self.headless = headless
         self.db = SessionLocal()
 
+import shutil
+from selenium.webdriver.chrome.service import Service
+
+# ... (existing imports)
+
     def setup_driver(self):
         """Setup Chrome WebDriver with options"""
         chrome_options = Options()
+        
+        # Determine binary location (useful for Railway/Nixpacks)
+        chrome_bin = shutil.which("chromium") or shutil.which("google-chrome") or shutil.which("google-chrome-stable")
+        if chrome_bin:
+            print(f"Found Chrome binary at: {chrome_bin}")
+            chrome_options.binary_location = chrome_bin
+        
         if self.headless:
-            chrome_options.add_argument("--headless")
+            # Use new headless mode for better stability
+            chrome_options.add_argument("--headless=new")
+        
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument(
-            "user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+            "user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
 
-        self.driver = webdriver.Chrome(options=chrome_options)
-        self.driver.set_page_load_timeout(60)  # Increased from 30 to 60 seconds
+        # Check for system chromedriver
+        chromedriver_bin = shutil.which("chromedriver")
+        service = None
+        if chromedriver_bin:
+            print(f"Found ChromeDriver binary at: {chromedriver_bin}")
+            service = Service(executable_path=chromedriver_bin)
+
+        if service:
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
+        else:
+            self.driver = webdriver.Chrome(options=chrome_options)
+            
+        self.driver.set_page_load_timeout(60)
 
     def extract_crn_from_title(self, title: str) -> Optional[str]:
         """
