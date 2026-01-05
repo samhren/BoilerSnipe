@@ -16,6 +16,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from bs4 import BeautifulSoup
+import shutil
+from selenium.webdriver.chrome.service import Service
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -35,8 +37,6 @@ class InventoryScraper:
         self.headless = headless
         self.db = SessionLocal()
 
-import shutil
-from selenium.webdriver.chrome.service import Service
 
 # ... (existing imports)
 
