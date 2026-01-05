@@ -60,7 +60,7 @@ const WeeklySchedule = ({ tracks, onEventClick }) => {
 
     return (
         <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6 overflow-hidden">
-            <h2 className="text-lg font-bold text-slate-800 mb-2">Weekly Schedule</h2>
+            <h2 className="text-lg font-bold text-slate-800 mb-2">Tracked Weekly Schedule</h2>
 
             <div className="flex relative items-stretch" style={{ height: `${totalHeight}px` }}>
 
