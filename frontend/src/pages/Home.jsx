@@ -88,7 +88,7 @@ const Home = () => {
             </div>
             <h3 className="font-semibold text-slate-800 mb-2">Instant Alerts</h3>
             <p className="text-slate-500 text-sm">
-              Get a Telegram notification the moment a seat opens
+              Get an email notification the moment a seat opens
             </p>
           </div>
         </div>
@@ -98,7 +98,7 @@ const Home = () => {
           <h2 className="text-xl font-bold text-slate-800 mb-6">How it works</h2>
           <div className="space-y-4">
             {[
-              { step: 1, title: 'Create an account', desc: 'Sign up with your email and Telegram chat ID' },
+              { step: 1, title: 'Create an account', desc: 'Sign up with your email' },
               { step: 2, title: 'Search for courses', desc: 'Find the courses you want to track' },
               { step: 3, title: 'Start tracking', desc: 'Add courses to your watchlist' },
               { step: 4, title: 'Get notified', desc: 'Receive instant alerts when seats open' },
