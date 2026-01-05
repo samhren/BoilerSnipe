@@ -13,7 +13,6 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    telegram_chat_id = Column(String, nullable=False)  # For Telegram notifications
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -95,7 +94,6 @@ class NotificationLog(Base):
 
     notification_type = Column(String)  # "seat_open", "seat_closed"
     message = Column(String)
-    telegram_chat_id = Column(String)
     status = Column(String)  # "sent", "failed"
     error_message = Column(String, nullable=True)
 

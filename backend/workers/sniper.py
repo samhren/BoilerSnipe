@@ -161,7 +161,7 @@ class SeatSniper:
 
     def send_notification(self, track: Track, notification_type: str, seats: int):
         """
-        Send notification via Telegram.
+        Send notification via Email.
 
         Args:
             track: The Track object
@@ -169,7 +169,7 @@ class SeatSniper:
             seats: Number of seats available
         """
         # Import here to avoid circular dependency
-        from .notifier import send_telegram_notification
+        from .notifier import send_email_notification
 
         try:
             user = track.user
@@ -177,30 +177,49 @@ class SeatSniper:
 
             # Create message
             if notification_type == "seat_open":
-                message = (
-                    f"🎯 SEAT OPEN! {course.course_code} - {course.title}\n"
-                    f"CRN: {course.crn}\n"
-                    f"Seats available: {seats}\n"
-                    f"Time: {course.time} {course.days}\n"
-                    f"Instructor: {course.instructor}"
-                )
-            else:
-                message = (
-                    f"⚠️ Seat closed: {course.course_code} - {course.title}\n"
-                    f"CRN: {course.crn}\n"
-                    f"All seats filled."
-                )
+                subject = f"🎯 SEAT OPEN! {course.course_code}"
+                message = f"""
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <h2 style="color: #2e7d32; margin-top: 0;">🎯 Seat Open!</h2>
+                    <p style="font-size: 16px;">Good news! A seat has opened up for <strong>{course.course_code} - {course.title}</strong>.</p>
+                    
+                    <div style="background-color: #f5f5f5; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>CRN:</strong> {course.crn}</p>
+                        <p style="margin: 5px 0;"><strong>Seats Available:</strong> {seats}</p>
+                        <p style="margin: 5px 0;"><strong>Time:</strong> {course.time} {course.days}</p>
+                        <p style="margin: 5px 0;"><strong>Instructor:</strong> {course.instructor}</p>
+                    </div>
 
-            # Send Telegram message
-            success, error = send_telegram_notification(user.telegram_chat_id, message)
+                    <p>Go register now before it's gone!</p>
+                    
+                    <a href="https://mypurdue.purdue.edu" style="display: inline-block; background-color: #cfb991; color: #000; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Go to myPurdue</a>
+                </div>
+                """
+            else:
+                subject = f"⚠️ Seat Closed: {course.course_code}"
+                message = f"""
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    <h2 style="color: #d32f2f; margin-top: 0;">⚠️ Seat Closed</h2>
+                    <p style="font-size: 16px;">Bad news. The seat for <strong>{course.course_code} - {course.title}</strong> has been filled.</p>
+                    
+                    <div style="background-color: #f5f5f5; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>CRN:</strong> {course.crn}</p>
+                        <p style="margin: 5px 0;"><strong>Status:</strong> All seats filled</p>
+                    </div>
+
+                    <p>We'll keep watching and let you know if another one opens up.</p>
+                </div>
+                """
+
+            # Send Email
+            success, error = send_email_notification(user.email, subject, message)
 
             # Log notification
             log = NotificationLog(
                 user_id=user.id,
                 course_id=course.id,
                 notification_type=notification_type,
-                message=message,
-                telegram_chat_id=user.telegram_chat_id,
+                message=subject,  # Log subject instead of full HTML
                 status="sent" if success else "failed",
                 error_message=error
             )
@@ -208,9 +227,9 @@ class SeatSniper:
             self.db.commit()
 
             if success:
-                print(f"  ✓ Sent {notification_type} notification for CRN {course.crn} to {user.email}")
+                print(f"  ✓ Sent {notification_type} email for CRN {course.crn} to {user.email}")
             else:
-                print(f"  ✗ Failed to send notification: {error}")
+                print(f"  ✗ Failed to send email: {error}")
 
         except Exception as e:
             print(f"  ✗ Error sending notification: {str(e)}")

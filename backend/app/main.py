@@ -60,7 +60,6 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     # Create new user
     new_user = models.User(
         email=user_data.email,
-        telegram_chat_id=user_data.telegram_chat_id,
         hashed_password=models.User.hash_password(user_data.password)
     )
     db.add(new_user)

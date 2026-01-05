@@ -12,9 +12,9 @@ selenium>=4.27.0
 beautifulsoup4==4.12.3
 lxml==5.1.0
 requests==2.31.0
-# Telegram uses requests (already included)
 python-dotenv==1.0.0
 apscheduler==3.10.4
 alembic==1.13.1
 psycopg2-binary==2.9.9
 gunicorn==21.2.0
+resend==2.6.0

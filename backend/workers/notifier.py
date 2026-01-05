@@ -1,11 +1,12 @@
 """
-Telegram notification service
+Email notification service using Resend
 """
 
-from typing import Tuple, Optional
-import requests
+import os
 import sys
+from typing import Tuple, Optional
 from pathlib import Path
+import resend
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -13,61 +14,65 @@ sys.path.append(str(Path(__file__).parent.parent))
 from app.config import settings
 
 
-def send_telegram_notification(chat_id: str, message: str) -> Tuple[bool, Optional[str]]:
+def send_email_notification(to_email: str, subject: str, html_content: str) -> Tuple[bool, Optional[str]]:
     """
-    Send notification via Telegram Bot API.
+    Send notification via Resend API.
 
     Args:
-        chat_id: Telegram chat ID of the recipient
-        message: Message text to send
+        to_email: Recipient email address
+        subject: Email subject
+        html_content: HTML content of the email
 
     Returns:
         Tuple of (success: bool, error_message: Optional[str])
     """
-    if not settings.TELEGRAM_BOT_TOKEN:
-        print("⚠️  Telegram not configured. Set TELEGRAM_BOT_TOKEN in .env")
-        return False, "Telegram bot token not configured"
+    if not settings.RESEND_API_KEY:
+        print("⚠️  Resend not configured. Set RESEND_API_KEY in .env")
+        return False, "Resend API key not configured"
+
+    resend.api_key = settings.RESEND_API_KEY
 
     try:
-        url = f"https://api.telegram.org/bot{settings.TELEGRAM_BOT_TOKEN}/sendMessage"
+        params = {
+            "from": "BoilerSnipe <notifications@boilersnipe.com>",
+            "to": [to_email],
+            "subject": subject,
+            "html": html_content,
+        }
 
-        response = requests.post(url, json={
-            "chat_id": chat_id,
-            "text": message,
-            "parse_mode": "HTML"
-        }, timeout=10)
-
-        data = response.json()
-
-        if data.get("ok"):
+        email = resend.Emails.send(params)
+        
+        # Resend returns an object with 'id' on success
+        if email and email.get("id"):
             return True, None
         else:
-            error_msg = data.get("description", "Unknown error")
-            print(f"  ✗ Telegram error: {error_msg}")
-            return False, error_msg
-
-    except requests.RequestException as e:
-        error_msg = f"Request error: {str(e)}"
-        print(f"  ✗ {error_msg}")
-        return False, error_msg
+            return False, "Failed to send email (unknown error)"
 
     except Exception as e:
-        error_msg = f"Unexpected error: {str(e)}"
+        error_msg = f"Error sending email: {str(e)}"
         print(f"  ✗ {error_msg}")
         return False, error_msg
 
 
-def test_notification(chat_id: str):
+def test_notification(to_email: str):
     """
-    Test the notification system by sending a test message.
+    Test the notification system by sending a test email.
 
     Args:
-        chat_id: Telegram chat ID to send test to
+        to_email: Email address to send test to
     """
-    message = "🎯 Test notification from BoilerSnipe! If you receive this, notifications are working."
+    subject = "🎯 Test Notification from BoilerSnipe"
+    html_content = """
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Test Notification</h2>
+        <p>If you received this email, BoilerSnipe notifications are working correctly!</p>
+        <p>Happy hunting,</p>
+        <p>The BoilerSnipe Team</p>
+    </div>
+    """
 
-    print(f"Sending test notification to chat ID {chat_id}...")
-    success, error = send_telegram_notification(chat_id, message)
+    print(f"Sending test email to {to_email}...")
+    success, error = send_email_notification(to_email, subject, html_content)
 
     if success:
         print("✓ Test notification sent successfully!")
@@ -77,12 +82,7 @@ def test_notification(chat_id: str):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        test_chat_id = sys.argv[1]
-        test_notification(test_chat_id)
+        test_email = sys.argv[1]
+        test_notification(test_email)
     else:
-        print("Usage: python notifier.py <telegram_chat_id>")
-        print("\nTo get your chat ID:")
-        print("1. Create a bot via @BotFather on Telegram")
-        print("2. Start a chat with your bot")
-        print("3. Visit: https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates")
-        print("4. Look for 'chat': {'id': YOUR_CHAT_ID}")
+        print("Usage: python notifier.py <email_address>")

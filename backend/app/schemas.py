@@ -8,15 +8,6 @@ import re
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
-    telegram_chat_id: str
-
-    @validator('telegram_chat_id')
-    def validate_chat_id(cls, v):
-        # Chat IDs are numeric (can be negative for groups)
-        v = v.strip()
-        if not v.lstrip('-').isdigit():
-            raise ValueError('Telegram chat ID must be numeric')
-        return v
 
     @validator('password')
     def validate_password(cls, v):
@@ -28,7 +19,6 @@ class UserCreate(BaseModel):
 class UserResponse(BaseModel):
     id: int
     email: str
-    telegram_chat_id: str
     is_active: bool
     created_at: datetime
 

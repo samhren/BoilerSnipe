@@ -7,7 +7,6 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    telegram_chat_id: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,7 +41,6 @@ const Register = () => {
     const result = await register({
       email: formData.email,
       password: formData.password,
-      telegram_chat_id: formData.telegram_chat_id,
     });
 
     if (result.success) {
@@ -86,24 +84,7 @@ const Register = () => {
               />
             </div>
 
-            <div>
-              <label htmlFor="telegram_chat_id" className="block text-sm font-medium text-gray-700 mb-2">
-                Telegram Chat ID
-              </label>
-              <input
-                id="telegram_chat_id"
-                name="telegram_chat_id"
-                type="text"
-                value={formData.telegram_chat_id}
-                onChange={handleChange}
-                required
-                className="input-field"
-                placeholder="123456789"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Message <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-purdue-gold hover:underline">@userinfobot</a> on Telegram to get your ID
-              </p>
-            </div>
+
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">

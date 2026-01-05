@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
-    # Telegram Bot
-    TELEGRAM_BOT_TOKEN: Optional[str] = None
+    # Resend Email
+    RESEND_API_KEY: Optional[str] = None
 
     # Proxy (optional)
     PROXY_URL: Optional[str] = None
