@@ -1,4 +1,5 @@
-const TrackCard = ({ track, onDelete, onUpdate }) => {
+import React, { forwardRef } from 'react';
+const TrackCard = forwardRef(({ track, onDelete, onUpdate }, ref) => {
   const { course } = track;
   const isUpdating = course.seats_capacity === 0 && course.seats_remaining === 0;
 
@@ -12,7 +13,7 @@ const TrackCard = ({ track, onDelete, onUpdate }) => {
   const status = getStatusStyles();
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 transition-all hover:shadow-md">
+    <div ref={ref} className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 transition-all hover:shadow-md scroll-mt-24 transition-colors duration-500">
       {/* Header with status */}
       <div className={`${status.bg} px-4 py-2 flex justify-between items-center`}>
         <span className={`text-sm font-medium ${status.text}`}>{status.label}</span>
@@ -94,6 +95,8 @@ const TrackCard = ({ track, onDelete, onUpdate }) => {
       </div>
     </div>
   );
-};
+});
+
+TrackCard.displayName = 'TrackCard';
 
 export default TrackCard;

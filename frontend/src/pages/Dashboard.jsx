@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { tracksAPI } from '../services/api';
 import TrackCard from '../components/TrackCard';
@@ -85,6 +85,23 @@ const Dashboard = () => {
     }
   };
 
+  /* Scroll to track logic */
+  const trackRefs = useRef({});
+
+  const handleEventClick = (trackId) => {
+    const element = trackRefs.current[trackId];
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Visual feedback
+      element.classList.add('ring-2', 'ring-indigo-500', 'ring-offset-2');
+      setTimeout(() => {
+        element.classList.remove('ring-2', 'ring-indigo-500', 'ring-offset-2');
+      }, 1500);
+
+      trackEvent(EVENTS.SCHEDULE_EVENT_CLICKED, { track_id: trackId });
+    }
+  };
+
   const openSeats = tracks.filter(t => t.course.seats_remaining > 0).length;
   const closedSeats = tracks.length - openSeats;
 
@@ -126,7 +143,12 @@ const Dashboard = () => {
         </div>
 
         {/* Weekly Schedule */}
-        {!loading && tracks.length > 0 && <WeeklySchedule tracks={tracks} />}
+        {!loading && tracks.length > 0 && (
+          <WeeklySchedule
+            tracks={tracks}
+            onEventClick={handleEventClick}
+          />
+        )}
 
         {/* Error */}
         {error && (
@@ -170,6 +192,7 @@ const Dashboard = () => {
             {tracks.map(track => (
               <TrackCard
                 key={track.id}
+                ref={el => trackRefs.current[track.id] = el}
                 track={track}
                 onDelete={handleDelete}
                 onUpdate={handleUpdate}
