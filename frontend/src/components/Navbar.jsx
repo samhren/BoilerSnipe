@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { trackEvent, EVENTS } from '../hooks/usePostHog';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -9,12 +10,26 @@ const Navbar = () => {
 
   const isActive = (path) => location.pathname === path;
 
+  const handleNavClick = (destination) => {
+    trackEvent(EVENTS.NAV_CLICK, {
+      destination,
+      from: location.pathname,
+      is_authenticated: !!user,
+    });
+  };
+
+  const handleMobileMenuToggle = () => {
+    const newState = !menuOpen;
+    setMenuOpen(newState);
+    trackEvent(EVENTS.MOBILE_MENU_TOGGLE, { opened: newState });
+  };
+
   return (
     <nav className="bg-slate-900 text-white sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-14">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2" onClick={() => setMenuOpen(false)}>
+          <Link to="/" className="flex items-center gap-2" onClick={() => { setMenuOpen(false); handleNavClick('/'); }}>
             <span className="text-xl">🎯</span>
             <span className="font-bold text-lg">BoilerSnipe</span>
           </Link>
@@ -25,6 +40,7 @@ const Navbar = () => {
               <>
                 <Link
                   to="/dashboard"
+                  onClick={() => handleNavClick('/dashboard')}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive('/dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
                   }`}
@@ -33,6 +49,7 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/search"
+                  onClick={() => handleNavClick('/search')}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     isActive('/search') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
                   }`}
@@ -52,12 +69,14 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
+                  onClick={() => handleNavClick('/login')}
                   className="px-3 py-2 text-sm text-slate-300 hover:text-white transition-colors"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
+                  onClick={() => handleNavClick('/register')}
                   className="px-4 py-2 bg-amber-500 text-slate-900 rounded-lg text-sm font-semibold hover:bg-amber-400 transition-colors"
                 >
                   Sign Up
@@ -68,7 +87,7 @@ const Navbar = () => {
 
           {/* Mobile menu button */}
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={handleMobileMenuToggle}
             className="sm:hidden p-2 text-slate-300 hover:text-white"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +107,7 @@ const Navbar = () => {
               <>
                 <Link
                   to="/dashboard"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => { setMenuOpen(false); handleNavClick('/dashboard'); }}
                   className={`block px-3 py-2 rounded-lg text-sm font-medium ${
                     isActive('/dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300'
                   }`}
@@ -97,7 +116,7 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/search"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => { setMenuOpen(false); handleNavClick('/search'); }}
                   className={`block px-3 py-2 rounded-lg text-sm font-medium ${
                     isActive('/search') ? 'bg-slate-800 text-white' : 'text-slate-300'
                   }`}
@@ -117,14 +136,14 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => { setMenuOpen(false); handleNavClick('/login'); }}
                   className="block px-3 py-2 text-sm text-slate-300"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => { setMenuOpen(false); handleNavClick('/register'); }}
                   className="block px-3 py-2 text-sm font-semibold text-amber-500"
                 >
                   Sign Up

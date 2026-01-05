@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { trackEvent, EVENTS } from '../hooks/usePostHog';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -22,6 +23,7 @@ const Login = () => {
       navigate('/dashboard');
     } else {
       setError(result.error);
+      trackEvent(EVENTS.VALIDATION_ERROR, { page: 'login', error: result.error });
     }
 
     setLoading(false);

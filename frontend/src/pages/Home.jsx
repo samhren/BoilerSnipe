@@ -1,8 +1,18 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { trackEvent, EVENTS } from '../hooks/usePostHog';
 
 const Home = () => {
   const { user } = useAuth();
+
+  const handleCTAClick = (ctaName, destination) => {
+    trackEvent(EVENTS.CTA_CLICK, {
+      cta_name: ctaName,
+      destination,
+      is_authenticated: !!user,
+      location: 'hero',
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -21,12 +31,14 @@ const Home = () => {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   to="/dashboard"
+                  onClick={() => handleCTAClick('go_to_dashboard', '/dashboard')}
                   className="px-6 py-3 bg-white text-slate-900 rounded-lg font-semibold hover:bg-slate-100 transition-colors"
                 >
                   Go to Dashboard
                 </Link>
                 <Link
                   to="/search"
+                  onClick={() => handleCTAClick('search_courses', '/search')}
                   className="px-6 py-3 bg-slate-800 text-white rounded-lg font-semibold hover:bg-slate-700 transition-colors border border-slate-700"
                 >
                   Search Courses
@@ -36,12 +48,14 @@ const Home = () => {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   to="/register"
+                  onClick={() => handleCTAClick('get_started', '/register')}
                   className="px-6 py-3 bg-amber-500 text-slate-900 rounded-lg font-semibold hover:bg-amber-400 transition-colors"
                 >
                   Get Started
                 </Link>
                 <Link
                   to="/login"
+                  onClick={() => handleCTAClick('login', '/login')}
                   className="px-6 py-3 bg-slate-800 text-white rounded-lg font-semibold hover:bg-slate-700 transition-colors border border-slate-700"
                 >
                   Login

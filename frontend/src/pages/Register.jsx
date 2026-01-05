@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { trackEvent, EVENTS } from '../hooks/usePostHog';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -28,11 +29,13 @@ const Register = () => {
     // Validation
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
+      trackEvent(EVENTS.VALIDATION_ERROR, { page: 'register', error: 'passwords_mismatch' });
       return;
     }
 
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters');
+      trackEvent(EVENTS.VALIDATION_ERROR, { page: 'register', error: 'password_too_short' });
       return;
     }
 
