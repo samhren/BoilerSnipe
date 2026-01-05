@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import timedelta
@@ -12,6 +13,14 @@ app = FastAPI(
     title="BoilerSnipe API",
     description="Track Purdue course seat availability and get notified instantly",
     version="1.0.0"
+)
+
+)
+
+# Trusted Host middleware (must be added before CORS)
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=settings.ALLOWED_HOSTS
 )
 
 # CORS middleware

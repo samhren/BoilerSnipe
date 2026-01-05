@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
+from typing import Optional, List
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -23,6 +24,16 @@ class Settings(BaseSettings):
 
     # CORS
     FRONTEND_URL: Optional[str] = None
+    
+    # Security
+    ALLOWED_HOSTS: List[str] = ["localhost", "127.0.0.1"]
+
+    @field_validator("ALLOWED_HOSTS", mode="before")
+    @classmethod
+    def parse_allowed_hosts(cls, v):
+        if isinstance(v, str):
+            return [host.strip() for host in v.split(",")]
+        return v
 
     class Config:
         env_file = ".env"
