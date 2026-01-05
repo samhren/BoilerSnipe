@@ -40,6 +40,14 @@ class InventoryScraper:
 
 # ... (existing imports)
 
+def run_command_debug(cmd):
+    import subprocess
+    try:
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        print(f"CMD '{cmd}':\n{result.stdout}")
+    except Exception as e:
+        print(f"CMD '{cmd}' failed: {e}")
+
     def setup_driver(self):
         """Setup Chrome WebDriver with options"""
         import os
@@ -112,13 +120,6 @@ class InventoryScraper:
             
         self.driver.set_page_load_timeout(60)
 
-def run_command_debug(cmd):
-    import subprocess
-    try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        print(f"CMD '{cmd}':\n{result.stdout}")
-    except Exception as e:
-        print(f"CMD '{cmd}' failed: {e}")
 
     def extract_crn_from_title(self, title: str) -> Optional[str]:
         """
