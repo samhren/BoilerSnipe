@@ -56,23 +56,24 @@ class InventoryScraper:
         
         chrome_options = Options()
         
-        # Determine binary location (useful for Railway/Nixpacks)
-        # Check multiple possible names
-        chrome_bins = ["chromium", "google-chrome", "google-chrome-stable", "chromium-browser"]
-        chrome_bin = None
+        # 1. Check strict CHROME_BIN environment variable (Highest Priority)
+        chrome_bin = os.environ.get("CHROME_BIN")
         
-        for name in chrome_bins:
-            path = shutil.which(name)
-            if path:
-                chrome_bin = path
-                break
-                
+        # 2. If not set, check common system paths
+        if not chrome_bin:
+            chrome_bins = ["chromium", "google-chrome", "google-chrome-stable", "chromium-browser"]
+            for name in chrome_bins:
+                path = shutil.which(name)
+                if path:
+                    chrome_bin = path
+                    break
+        
         if chrome_bin:
             print(f"Found Chrome binary at: {chrome_bin}")
             chrome_options.binary_location = chrome_bin
         else:
-            print("WARNING: Could not find Chrome binary in PATH!")
-        
+            print("WARNING: Could not find Chrome binary! Please set CHROME_BIN env var.")
+
         if self.headless:
             # Use new headless mode for better stability
             chrome_options.add_argument("--headless=new")
@@ -85,23 +86,24 @@ class InventoryScraper:
             "user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         )
 
-        # Check for system chromedriver
-        # Nixpacks often installs it as 'chromedriver' but let's check variations
-        driver_bins = ["chromedriver", "chromium.chromedriver", "chromium-driver"]
-        chromedriver_bin = None
+        # 1. Check strict CHROMEDRIVER_PATH environment variable (Highest Priority)
+        chromedriver_bin = os.environ.get("CHROMEDRIVER_PATH")
         
-        for name in driver_bins:
-            path = shutil.which(name)
-            if path:
-                chromedriver_bin = path
-                break
+        # 2. If not set, check common names/paths
+        if not chromedriver_bin:
+            driver_bins = ["chromedriver", "chromium.chromedriver", "chromium-driver"]
+            for name in driver_bins:
+                path = shutil.which(name)
+                if path:
+                    chromedriver_bin = path
+                    break
         
         service = None
         if chromedriver_bin:
             print(f"Found ChromeDriver binary at: {chromedriver_bin}")
             service = Service(executable_path=chromedriver_bin)
         else:
-             print("WARNING: Could not find ChromeDriver binary in PATH! Selenium will try to download one.")
+             print("WARNING: Could not find ChromeDriver binary! Selenium will try to download one.")
 
         try:
             if service:
@@ -110,13 +112,6 @@ class InventoryScraper:
                 self.driver = webdriver.Chrome(options=chrome_options)
         except Exception as e:
             print(f"Failed to initialize WebDriver: {e}")
-            print("Listing /usr/bin and /nix/store (if accessible) to help debug:")
-            try:
-                # Debug: try to find where binaries might be hiding
-                run_command_debug("ls -F /usr/bin | grep chrome")
-                run_command_debug("ls -F /usr/bin | grep chromium")
-            except:
-                pass
             raise e
             
         self.driver.set_page_load_timeout(60)
