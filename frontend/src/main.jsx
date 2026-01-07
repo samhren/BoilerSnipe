@@ -19,7 +19,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <App />
       <UmamiAnalytics
         url="/"
-        websiteId="aac51aaa-1826-437b-8001-66232141aa69"
+        websiteId="776afd8e-b505-4776-8cf3-2986710ba3ab"
         scriptAttributes={{
           src: "/assets/lib.js",
           'data-host-url': "/"
