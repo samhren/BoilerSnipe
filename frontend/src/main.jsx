@@ -18,8 +18,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     })()}>
       <App />
       <UmamiAnalytics
-        url={import.meta.env.VITE_UMAMI_URL}
-        websiteId={import.meta.env.VITE_UMAMI_WEBSITE_ID}
+        url="https://umami.samhren.dev"
+        websiteId="aac51aaa-1826-437b-8001-66232141aa69"
+        debug={true}
+        onlyInProduction={false}
       />
     </GoogleOAuthProvider>
   </React.StrictMode>,
