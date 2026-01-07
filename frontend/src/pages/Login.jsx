@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { trackEvent, EVENTS } from '../hooks/usePostHog';
+
 import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
@@ -24,7 +24,6 @@ const Login = () => {
       navigate('/dashboard');
     } else {
       setError(result.error);
-      trackEvent(EVENTS.VALIDATION_ERROR, { page: 'login', error: result.error });
     }
 
     setLoading(false);

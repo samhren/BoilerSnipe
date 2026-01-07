@@ -9,9 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@danielgtmn/umami-react": "^1.1.2",
     "@react-oauth/google": "^0.13.4",
     "axios": "^1.6.5",
-    "posthog-js": "^1.313.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.1"

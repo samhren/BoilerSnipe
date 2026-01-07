@@ -101,7 +101,6 @@ This project is optimized for deployment on [Railway](https://railway.app/).
 3. **Variables**:
    - `VITE_API_URL`: The **Public Domain** of your Backend Service (e.g., `https://backend-production.up.railway.app`).
    - `VITE_GOOGLE_CLIENT_ID`: Your Google OAuth Client ID.
-   - `VITE_POSTHOG_KEY`: (Optional) For analytics.
    - `PORT`: `80` (Caddy listens on 80 inside the container, Railway maps it).
 4. **Networking**: Generate a Public Domain for this service to access the UI.
 
@@ -126,7 +125,6 @@ This project is optimized for deployment on [Railway](https://railway.app/).
 |----------|-------------|----------|
 | `VITE_API_URL` | URL of the backend API | Yes (Prod only) |
 | `VITE_GOOGLE_CLIENT_ID` | OAuth Client ID for React | Yes |
-| `VITE_POSTHOG_KEY` | Analytics key | No |
 
 ---
 

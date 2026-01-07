@@ -1,12 +1,13 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
-import { identifyUser, resetUser, trackEvent, EVENTS } from './usePostHog';
+import { useUmami } from '@danielgtmn/umami-react';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { track } = useUmami();
 
   useEffect(() => {
     // Check if user is logged in on mount
@@ -16,18 +17,11 @@ export const AuthProvider = ({ children }) => {
     if (token && storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
-      // Identify user in PostHog on app load
-      identifyUser(parsedUser.id?.toString() || parsedUser.email, {
-        email: parsedUser.email,
-      });
       // Verify token is still valid
       authAPI.getCurrentUser()
         .then(response => {
           setUser(response.data);
           localStorage.setItem('user', JSON.stringify(response.data));
-          identifyUser(response.data.id?.toString() || response.data.email, {
-            email: response.data.email,
-          });
         })
         .catch(() => {
           logout();
@@ -41,7 +35,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    trackEvent(EVENTS.LOGIN_ATTEMPTED, { email_domain: email.split('@')[1] });
     try {
       const response = await authAPI.login({ email, password });
       const { access_token } = response.data;
@@ -55,19 +48,11 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      // Identify user in PostHog
-      identifyUser(userData.id?.toString() || userData.email, {
-        email: userData.email,
-      });
-      trackEvent(EVENTS.LOGIN_SUCCESS, { email_domain: email.split('@')[1] });
+      track('Login', { method: 'email' });
 
       return { success: true };
     } catch (error) {
       const errorMessage = error.response?.data?.detail || 'Login failed';
-      trackEvent(EVENTS.LOGIN_FAILED, {
-        email_domain: email.split('@')[1],
-        error: errorMessage,
-      });
       return {
         success: false,
         error: errorMessage
@@ -76,7 +61,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const googleLogin = async (token) => {
-    trackEvent(EVENTS.LOGIN_ATTEMPTED, { method: 'google' });
     try {
       const response = await authAPI.googleLogin(token);
       const { access_token } = response.data;
@@ -90,20 +74,11 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      // Identify user in PostHog
-      identifyUser(userData.id?.toString() || userData.email, {
-        email: userData.email,
-        method: 'google'
-      });
-      trackEvent(EVENTS.LOGIN_SUCCESS, { method: 'google' });
+      track('Login', { method: 'google' });
 
       return { success: true };
     } catch (error) {
       const errorMessage = error.response?.data?.detail || 'Google login failed';
-      trackEvent(EVENTS.LOGIN_FAILED, {
-        method: 'google',
-        error: errorMessage,
-      });
       return {
         success: false,
         error: errorMessage
@@ -112,19 +87,14 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (userData) => {
-    trackEvent(EVENTS.REGISTER_ATTEMPTED, { email_domain: userData.email.split('@')[1] });
     try {
       await authAPI.register(userData);
-      trackEvent(EVENTS.REGISTER_SUCCESS, { email_domain: userData.email.split('@')[1] });
+      track('Register', { email: userData.email });
 
       // Auto-login after registration
       return await login(userData.email, userData.password);
     } catch (error) {
       const errorMessage = error.response?.data?.detail || 'Registration failed';
-      trackEvent(EVENTS.REGISTER_FAILED, {
-        email_domain: userData.email.split('@')[1],
-        error: errorMessage,
-      });
       return {
         success: false,
         error: errorMessage
@@ -133,11 +103,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    trackEvent(EVENTS.LOGOUT);
-    resetUser();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
+    track('Logout');
   };
 
   return (

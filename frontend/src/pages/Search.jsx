@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { coursesAPI, tracksAPI } from '../services/api';
 import CourseCard from '../components/CourseCard';
-import { trackEvent, EVENTS } from '../hooks/usePostHog';
+import { useUmami } from '@danielgtmn/umami-react';
+
 
 const Search = () => {
   const [query, setQuery] = useState('');
@@ -11,6 +12,7 @@ const Search = () => {
   const [tracking, setTracking] = useState(null);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
+  const { track } = useUmami();
 
   useEffect(() => {
     loadTrackedCourses();
@@ -23,15 +25,12 @@ const Search = () => {
       setTrackedCRNs(crns);
     } catch (err) {
       console.error('Failed to load tracked courses:', err);
-      trackEvent(EVENTS.API_ERROR, { action: 'load_tracked_courses', error: err.message });
     }
   };
 
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!query.trim()) return;
-
-    trackEvent(EVENTS.SEARCH_PERFORMED, { query: query.trim() });
 
     try {
       setLoading(true);
@@ -42,48 +41,27 @@ const Search = () => {
 
       if (response.data.length === 0) {
         setError('No courses found');
-        trackEvent(EVENTS.SEARCH_NO_RESULTS, { query: query.trim() });
+        track('Search', { query, results: 0 });
       } else {
-        trackEvent(EVENTS.SEARCH_RESULTS_SHOWN, {
-          query: query.trim(),
-          results_count: response.data.length,
-          available_count: response.data.filter(c => c.seats_remaining > 0).length,
-        });
+        track('Search', { query, results: response.data.length });
       }
     } catch (err) {
       setError('Failed to search courses');
-      trackEvent(EVENTS.API_ERROR, { action: 'search_courses', query: query.trim(), error: err.message });
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTrack = async (crn) => {
-    const course = courses.find(c => c.crn === crn);
-    trackEvent(EVENTS.COURSE_TRACK_CLICKED, {
-      crn,
-      course_code: course?.course_code,
-      seats_remaining: course?.seats_remaining,
-      seats_capacity: course?.seats_capacity,
-    });
 
+  const handleTrack = async (crn) => {
     try {
       setTracking(crn);
       await tracksAPI.create({ crn, notify_on_open: true, notify_on_close: false });
       setTrackedCRNs(new Set([...trackedCRNs, crn]));
-      trackEvent(EVENTS.COURSE_TRACKED, {
-        crn,
-        course_code: course?.course_code,
-        seats_remaining: course?.seats_remaining,
-      });
+      track('Track Course', { crn });
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to track course');
-      trackEvent(EVENTS.COURSE_TRACK_FAILED, {
-        crn,
-        course_code: course?.course_code,
-        error: err.response?.data?.detail || err.message,
-      });
       console.error(err);
     } finally {
       setTracking(null);

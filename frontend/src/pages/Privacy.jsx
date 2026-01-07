@@ -32,7 +32,7 @@ const Privacy = () => {
             <p className="mb-2">We use the following third-party services:</p>
             <ul className="list-disc list-inside space-y-1 ml-4">
               <li><strong>Resend:</strong> For sending email notifications</li>
-              <li><strong>PostHog:</strong> For analytics and product improvement</li>
+              <li><strong>Resend:</strong> For sending email notifications</li>
               <li><strong>Railway:</strong> For hosting our service</li>
             </ul>
             <p className="mt-2">These services have their own privacy policies governing their use of your data.</p>
@@ -66,7 +66,7 @@ const Privacy = () => {
 
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">7. Cookies</h2>
-            <p>We use localStorage to store your authentication token. We also use analytics cookies through PostHog to understand how users interact with our service.</p>
+            <p>We use localStorage to store your authentication token.</p>
           </section>
 
           <section>

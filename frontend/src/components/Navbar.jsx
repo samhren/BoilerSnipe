@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { trackEvent, EVENTS } from '../hooks/usePostHog';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -41,18 +40,16 @@ const Navbar = () => {
                 <Link
                   to="/dashboard"
                   onClick={() => handleNavClick('/dashboard')}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive('/dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                  }`}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                    }`}
                 >
                   Dashboard
                 </Link>
                 <Link
                   to="/search"
                   onClick={() => handleNavClick('/search')}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive('/search') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                  }`}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive('/search') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                    }`}
                 >
                   Search
                 </Link>
@@ -108,18 +105,16 @@ const Navbar = () => {
                 <Link
                   to="/dashboard"
                   onClick={() => { setMenuOpen(false); handleNavClick('/dashboard'); }}
-                  className={`block px-3 py-2 rounded-lg text-sm font-medium ${
-                    isActive('/dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300'
-                  }`}
+                  className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300'
+                    }`}
                 >
                   Dashboard
                 </Link>
                 <Link
                   to="/search"
                   onClick={() => { setMenuOpen(false); handleNavClick('/search'); }}
-                  className={`block px-3 py-2 rounded-lg text-sm font-medium ${
-                    isActive('/search') ? 'bg-slate-800 text-white' : 'text-slate-300'
-                  }`}
+                  className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/search') ? 'bg-slate-800 text-white' : 'text-slate-300'
+                    }`}
                 >
                   Search
                 </Link>

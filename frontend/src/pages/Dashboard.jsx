@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { tracksAPI } from '../services/api';
 import TrackCard from '../components/TrackCard';
 import WeeklySchedule from '../components/WeeklySchedule';
-import { trackEvent, EVENTS } from '../hooks/usePostHog';
+
 
 const Dashboard = () => {
   const [tracks, setTracks] = useState([]);
@@ -21,16 +21,9 @@ const Dashboard = () => {
       setTracks(response.data);
       setError('');
 
-      // Track dashboard load with stats
-      const openSeats = response.data.filter(t => t.course.seats_remaining > 0).length;
-      trackEvent(EVENTS.DASHBOARD_LOADED, {
-        total_tracked: response.data.length,
-        available_courses: openSeats,
-        full_courses: response.data.length - openSeats,
-      });
+      setError('');
     } catch (err) {
       setError('Failed to load tracked courses');
-      trackEvent(EVENTS.API_ERROR, { action: 'load_tracks', error: err.message });
       console.error(err);
     } finally {
       setLoading(false);
@@ -46,13 +39,8 @@ const Dashboard = () => {
     try {
       await tracksAPI.delete(trackId);
       setTracks(tracks.filter(t => t.id !== trackId));
-      trackEvent(EVENTS.COURSE_UNTRACKED, {
-        course_code: track?.course?.course_code,
-        crn: track?.course?.crn,
-      });
     } catch (err) {
       alert('Failed to remove course');
-      trackEvent(EVENTS.API_ERROR, { action: 'delete_track', error: err.message });
       console.error(err);
     }
   };
@@ -62,25 +50,9 @@ const Dashboard = () => {
     try {
       const response = await tracksAPI.update(trackId, updateData);
       setTracks(tracks.map(t => t.id === trackId ? response.data : t));
-
-      // Track notification setting changes
-      if ('notify_on_open' in updateData) {
-        trackEvent(EVENTS.NOTIFY_ON_OPEN_CHANGED, {
-          course_code: track?.course?.course_code,
-          crn: track?.course?.crn,
-          enabled: updateData.notify_on_open,
-        });
-      }
-      if ('notify_on_close' in updateData) {
-        trackEvent(EVENTS.NOTIFY_ON_CLOSE_CHANGED, {
-          course_code: track?.course?.course_code,
-          crn: track?.course?.crn,
-          enabled: updateData.notify_on_close,
-        });
-      }
     } catch (err) {
       alert('Failed to update settings');
-      trackEvent(EVENTS.API_ERROR, { action: 'update_track', error: err.message });
+      alert('Failed to update settings');
       console.error(err);
     }
   };
@@ -97,8 +69,6 @@ const Dashboard = () => {
       setTimeout(() => {
         element.classList.remove('ring-2', 'ring-indigo-500', 'ring-offset-2');
       }, 1500);
-
-      trackEvent(EVENTS.SCHEDULE_EVENT_CLICKED, { track_id: trackId });
     }
   };
 
@@ -116,7 +86,7 @@ const Dashboard = () => {
           </div>
           <Link
             to="/search"
-            onClick={() => trackEvent(EVENTS.ADD_COURSE_CLICKED, { source: 'dashboard_header' })}
+
             className="inline-flex items-center justify-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-lg font-medium hover:bg-slate-700 transition-colors text-sm sm:text-base"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,7 +148,7 @@ const Dashboard = () => {
             </p>
             <Link
               to="/search"
-              onClick={() => trackEvent(EVENTS.ADD_COURSE_CLICKED, { source: 'dashboard_empty_state' })}
+
               className="inline-flex items-center gap-2 bg-slate-800 text-white px-5 py-2.5 rounded-lg font-medium hover:bg-slate-700 transition-colors"
             >
               Search Courses
