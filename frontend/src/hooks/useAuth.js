@@ -9,6 +9,13 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { track } = useUmami();
 
+  /* Helper to identify user in Umami */
+  const identifyUser = (userData) => {
+    if (userData?.email && window.umami?.identify) {
+      window.umami.identify({ id: userData.email });
+    }
+  };
+
   useEffect(() => {
     // Check if user is logged in on mount
     const token = localStorage.getItem('token');
@@ -17,11 +24,14 @@ export const AuthProvider = ({ children }) => {
     if (token && storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
+      identifyUser(parsedUser);
+
       // Verify token is still valid
       authAPI.getCurrentUser()
         .then(response => {
           setUser(response.data);
           localStorage.setItem('user', JSON.stringify(response.data));
+          identifyUser(response.data);
         })
         .catch(() => {
           logout();
@@ -47,6 +57,7 @@ export const AuthProvider = ({ children }) => {
 
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+      identifyUser(userData);
 
       track('Login', { method: 'email' });
 
@@ -73,6 +84,7 @@ export const AuthProvider = ({ children }) => {
 
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+      identifyUser(userData);
 
       track('Login', { method: 'google' });
 
