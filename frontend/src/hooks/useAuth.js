@@ -9,10 +9,18 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { track } = useUmami();
 
-  /* Helper to identify user in Umami */
-  const identifyUser = (userData) => {
-    if (userData?.email && window.umami?.identify) {
+  /* Helper to identify user in Umami with retry */
+  const identifyUser = (userData, retries = 5) => {
+    if (!userData?.email) return;
+
+    if (window.umami && window.umami.identify) {
+      console.log('Umami identified user:', userData.email);
       window.umami.identify({ id: userData.email });
+    } else if (retries > 0) {
+      console.log(`Umami not ready, retrying identification (${retries} retries left)...`);
+      setTimeout(() => identifyUser(userData, retries - 1), 1000);
+    } else {
+      console.warn('Umami failed to load for identification.');
     }
   };
 
