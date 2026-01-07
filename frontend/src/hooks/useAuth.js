@@ -1,28 +1,13 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
-import { useUmami } from '@danielgtmn/umami-react';
+import { usePlausible } from 'next-plausible'
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { track } = useUmami();
-
-  /* Helper to identify user in Umami with retry */
-  const identifyUser = (userData, retries = 5) => {
-    if (!userData?.email) return;
-
-    if (window.umami && window.umami.identify) {
-      console.log('Umami identified user:', userData.email);
-      window.umami.identify({ id: userData.email });
-    } else if (retries > 0) {
-      console.log(`Umami not ready, retrying identification (${retries} retries left)...`);
-      setTimeout(() => identifyUser(userData, retries - 1), 1000);
-    } else {
-      console.warn('Umami failed to load for identification.');
-    }
-  };
+  const plausible = usePlausible();
 
   useEffect(() => {
     // Check if user is logged in on mount
@@ -32,14 +17,12 @@ export const AuthProvider = ({ children }) => {
     if (token && storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
-      identifyUser(parsedUser);
 
       // Verify token is still valid
       authAPI.getCurrentUser()
         .then(response => {
           setUser(response.data);
           localStorage.setItem('user', JSON.stringify(response.data));
-          identifyUser(response.data);
         })
         .catch(() => {
           logout();
@@ -65,9 +48,8 @@ export const AuthProvider = ({ children }) => {
 
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
-      identifyUser(userData);
 
-      track('Login', { method: 'email' });
+      plausible('Login');
 
       return { success: true };
     } catch (error) {
@@ -92,9 +74,8 @@ export const AuthProvider = ({ children }) => {
 
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
-      identifyUser(userData);
 
-      track('Login', { method: 'google' });
+      plausible('Login');
 
       return { success: true };
     } catch (error) {
@@ -109,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       await authAPI.register(userData);
-      track('Register', { email: userData.email });
+      plausible('Register');
 
       // Auto-login after registration
       return await login(userData.email, userData.password);
@@ -126,7 +107,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-    track('Logout');
+    plausible('Logout');
   };
 
   return (

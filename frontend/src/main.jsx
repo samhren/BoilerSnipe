@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
-import UmamiAnalytics from '@danielgtmn/umami-react';
+import PlausibleProvider from 'next-plausible'
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
@@ -16,16 +16,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       }
       return clientId;
     })()}>
-      <App />
-      <UmamiAnalytics
-        url="/"
-        websiteId="776afd8e-b505-4776-8cf3-2986710ba3ab"
-        scriptAttributes={{
-          src: "/assets/lib.js",
-          'data-host-url': "/"
-        }}
-        onlyInProduction={false}
-      />
+      <PlausibleProvider domain="boilersnipe.com" customDomain='https://plausible.samhren.dev'>
+        <App />
+      </PlausibleProvider>
     </GoogleOAuthProvider>
   </React.StrictMode>,
 )

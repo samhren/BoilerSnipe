@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { coursesAPI, tracksAPI } from '../services/api';
 import CourseCard from '../components/CourseCard';
-import { useUmami } from '@danielgtmn/umami-react';
+import { usePlausible } from 'next-plausible'
 
 
 const Search = () => {
@@ -12,7 +12,7 @@ const Search = () => {
   const [tracking, setTracking] = useState(null);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
-  const { track } = useUmami();
+  const plausible = usePlausible();
 
   useEffect(() => {
     loadTrackedCourses();
@@ -41,10 +41,8 @@ const Search = () => {
 
       if (response.data.length === 0) {
         setError('No courses found');
-        track('Search', { query, results: 0 });
-      } else {
-        track('Search', { query, results: response.data.length });
       }
+      plausible('Search');
     } catch (err) {
       setError('Failed to search courses');
       console.error(err);
