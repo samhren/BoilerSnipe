@@ -24,7 +24,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
           src: "/assets/lib.js",
           'data-host-url': "/"
         }}
-        debug={true}
         onlyInProduction={false}
       />
     </GoogleOAuthProvider>
