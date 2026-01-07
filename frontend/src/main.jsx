@@ -18,12 +18,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     })()}>
       <App />
       <UmamiAnalytics
-        url="https://a.samhren.dev"
+        url="/"
         websiteId="aac51aaa-1826-437b-8001-66232141aa69"
         scriptAttributes={{
-          src: "/lib/client.js",
-          'data-host-url': "https://a.samhren.dev"
+          src: "/assets/lib.js",
+          'data-host-url': "/"
         }}
+        debug={true}
+        onlyInProduction={false}
       />
     </GoogleOAuthProvider>
   </React.StrictMode>,
