@@ -20,8 +20,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <UmamiAnalytics
         url="https://umami.samhren.dev"
         websiteId="aac51aaa-1826-437b-8001-66232141aa69"
-        debug={true}
-        onlyInProduction={false}
       />
     </GoogleOAuthProvider>
   </React.StrictMode>,
