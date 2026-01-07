@@ -2,7 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
-import PlausibleProvider from 'next-plausible'
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
@@ -16,9 +15,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       }
       return clientId;
     })()}>
-      <PlausibleProvider domain="boilersnipe.com" customDomain='https://plausible.samhren.dev'>
-        <App />
-      </PlausibleProvider>
+      <App />
     </GoogleOAuthProvider>
   </React.StrictMode>,
 )

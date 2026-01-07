@@ -1,13 +1,11 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
-import { usePlausible } from 'next-plausible'
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const plausible = usePlausible();
 
   useEffect(() => {
     // Check if user is logged in on mount
@@ -49,7 +47,6 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      plausible('Login');
 
       return { success: true };
     } catch (error) {
@@ -75,7 +72,6 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
 
-      plausible('Login');
 
       return { success: true };
     } catch (error) {
@@ -90,7 +86,6 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       await authAPI.register(userData);
-      plausible('Register');
 
       // Auto-login after registration
       return await login(userData.email, userData.password);
@@ -107,7 +102,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);
-    plausible('Logout');
   };
 
   return (

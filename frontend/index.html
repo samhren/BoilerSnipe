@@ -39,6 +39,20 @@
 </head>
 
 <body>
+  <script src="https://swetrix.org/swetrix.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      swetrix.init('FxtTmMsJ5Nt9', {
+        apiURL: 'https://swetrix-api-production.up.railway.app/log',
+      })
+      swetrix.trackViews()
+    })
+  </script>
+
+  <noscript>
+    <img src="https://swetrix-api-production.up.railway.app/log/noscript?pid=FxtTmMsJ5Nt9" alt=""
+      referrerpolicy="no-referrer-when-downgrade" />
+  </noscript>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
