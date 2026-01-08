@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { coursesAPI, tracksAPI } from '../services/api';
 import CourseCard from '../components/CourseCard';
-import { usePlausible } from 'next-plausible'
+
 
 
 const Search = () => {
@@ -12,7 +12,7 @@ const Search = () => {
   const [tracking, setTracking] = useState(null);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
-  const plausible = usePlausible();
+
 
   useEffect(() => {
     loadTrackedCourses();
@@ -42,7 +42,7 @@ const Search = () => {
       if (response.data.length === 0) {
         setError('No courses found');
       }
-      plausible('Search');
+
     } catch (err) {
       setError('Failed to search courses');
       console.error(err);
@@ -57,7 +57,7 @@ const Search = () => {
       setTracking(crn);
       await tracksAPI.create({ crn, notify_on_open: true, notify_on_close: false });
       setTrackedCRNs(new Set([...trackedCRNs, crn]));
-      track('Track Course', { crn });
+      console.log('Tracked Course:', { crn });
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to track course');
       console.error(err);

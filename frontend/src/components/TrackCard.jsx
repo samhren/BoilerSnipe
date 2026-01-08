@@ -19,7 +19,7 @@ const TrackCard = forwardRef(({ track, onDelete, onUpdate }, ref) => {
         <span className={`text-sm font-medium ${status.text}`}>{status.label}</span>
         {!isUpdating && (
           <span className={`text-sm font-bold ${status.text}`}>
-            {course.seats_remaining}/{course.seats_capacity} seats
+            {Math.max(0, course.seats_remaining)}/{course.seats_capacity} seats
           </span>
         )}
       </div>

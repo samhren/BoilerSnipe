@@ -17,7 +17,7 @@ const CourseCard = ({ course, onTrack, isTracking, isTracked }) => {
         <span className={`text-sm font-medium ${status.text}`}>{status.label}</span>
         {!isUntracked && (
           <span className={`text-sm font-bold ${status.text}`}>
-            {course.seats_remaining}/{course.seats_capacity}
+            {Math.max(0, course.seats_remaining)}/{course.seats_capacity}
           </span>
         )}
       </div>
@@ -54,13 +54,12 @@ const CourseCard = ({ course, onTrack, isTracking, isTracked }) => {
         <button
           onClick={() => onTrack(course.crn)}
           disabled={isTracking || isTracked}
-          className={`w-full py-2.5 rounded-lg font-medium text-sm transition-colors ${
-            isTracked
+          className={`w-full py-2.5 rounded-lg font-medium text-sm transition-colors ${isTracked
               ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
               : isTracking
-              ? 'bg-slate-200 text-slate-500 cursor-wait'
-              : 'bg-slate-800 text-white hover:bg-slate-700'
-          }`}
+                ? 'bg-slate-200 text-slate-500 cursor-wait'
+                : 'bg-slate-800 text-white hover:bg-slate-700'
+            }`}
         >
           {isTracking ? 'Adding...' : isTracked ? 'Tracking' : 'Track Course'}
         </button>
