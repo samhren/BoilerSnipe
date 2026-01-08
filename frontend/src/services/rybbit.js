@@ -1,55 +1,68 @@
 /**
  * Safe wrapper for Rybbit analytics
+ * Queues calls until Rybbit script is loaded
  */
+
+const pendingCalls = [];
+let isReady = false;
+
+function executeCall(method, args) {
+    if (window.rybbit && window.rybbit[method]) {
+        window.rybbit[method](...args);
+    }
+}
+
+function queueOrExecute(method, args) {
+    if (isReady && window.rybbit) {
+        executeCall(method, args);
+    } else {
+        pendingCalls.push({ method, args });
+    }
+}
+
+function flushQueue() {
+    isReady = true;
+    while (pendingCalls.length > 0) {
+        const { method, args } = pendingCalls.shift();
+        executeCall(method, args);
+    }
+}
+
+// Wait for Rybbit to be ready
+if (typeof window !== 'undefined') {
+    if (window.rybbit) {
+        isReady = true;
+    } else {
+        const checkInterval = setInterval(() => {
+            if (window.rybbit) {
+                clearInterval(checkInterval);
+                flushQueue();
+            }
+        }, 100);
+        // Stop checking after 10 seconds
+        setTimeout(() => clearInterval(checkInterval), 10000);
+    }
+}
+
 const rybbit = {
-    /**
-     * Identify a user
-     * @param {string} userId - The user's unique ID
-     * @param {Object} traits - User traits (email, name, etc.)
-     */
     identify: (userId, traits = {}) => {
-        if (window.rybbit) {
-            window.rybbit.identify(userId, traits);
-        }
+        queueOrExecute('identify', [String(userId), traits]);
     },
 
-    /**
-     * Track a custom event
-     * @param {string} eventName - Name of the event
-     * @param {Object} properties - Event properties
-     */
     track: (eventName, properties = {}) => {
-        if (window.rybbit) {
-            window.rybbit.event(eventName, properties);
-        }
+        queueOrExecute('event', [eventName, properties]);
     },
 
-    /**
-     * Track a page view
-     */
     pageview: () => {
-        if (window.rybbit) {
-            window.rybbit.pageview();
-        }
+        queueOrExecute('pageview', []);
     },
 
-    /**
-     * Clear user identification
-     */
     clearUserId: () => {
-        if (window.rybbit) {
-            window.rybbit.clearUserId();
-        }
+        queueOrExecute('clearUserId', []);
     },
 
-    /**
-     * Update user traits
-     * @param {Object} traits - New traits to merge
-     */
     setTraits: (traits) => {
-        if (window.rybbit) {
-            window.rybbit.setTraits(traits);
-        }
+        queueOrExecute('setTraits', [traits]);
     }
 };
 
