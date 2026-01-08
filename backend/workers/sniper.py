@@ -99,10 +99,11 @@ class SeatSniper:
                             # Get all td cells in this row
                             cells = row.find_all('td')
                             if len(cells) >= 3:
+                                remaining = int(cells[2].get_text().strip())
                                 return {
                                     'seats_capacity': int(cells[0].get_text().strip()),
                                     'seats_available': int(cells[1].get_text().strip()),
-                                    'seats_remaining': int(cells[2].get_text().strip()),
+                                    'seats_remaining': max(0, remaining),
                                 }
 
         except Exception as e:
