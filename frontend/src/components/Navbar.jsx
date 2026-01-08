@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import rybbit from '../services/rybbit';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -10,7 +11,7 @@ const Navbar = () => {
   const isActive = (path) => location.pathname === path;
 
   const handleNavClick = (destination) => {
-    trackEvent(EVENTS.NAV_CLICK, {
+    rybbit.track('Navigation Click', {
       destination,
       from: location.pathname,
       is_authenticated: !!user,
@@ -20,7 +21,7 @@ const Navbar = () => {
   const handleMobileMenuToggle = () => {
     const newState = !menuOpen;
     setMenuOpen(newState);
-    trackEvent(EVENTS.MOBILE_MENU_TOGGLE, { opened: newState });
+    rybbit.track('Mobile Menu Toggle', { opened: newState });
   };
 
   return (

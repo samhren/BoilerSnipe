@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { coursesAPI, tracksAPI } from '../services/api';
+import rybbit from '../services/rybbit';
 import CourseCard from '../components/CourseCard';
 
 
@@ -43,6 +44,12 @@ const Search = () => {
         setError('No courses found');
       }
 
+      rybbit.track('Course Search', {
+        query,
+        count: response.data.length,
+        has_results: response.data.length > 0
+      });
+
     } catch (err) {
       setError('Failed to search courses');
       console.error(err);
@@ -58,6 +65,7 @@ const Search = () => {
       await tracksAPI.create({ crn, notify_on_open: true, notify_on_close: false });
       setTrackedCRNs(new Set([...trackedCRNs, crn]));
       console.log('Tracked Course:', { crn });
+      rybbit.track('Track Course', { crn });
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to track course');
       console.error(err);
