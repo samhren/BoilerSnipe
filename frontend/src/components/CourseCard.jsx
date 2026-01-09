@@ -1,8 +1,8 @@
 const CourseCard = ({ course, onTrack, isTracking, isTracked }) => {
-  const isUntracked = course.seats_capacity === 0 && course.seats_remaining === 0;
+  const isUntracked = course.seats_remaining === 999;
 
   const getStatusStyles = () => {
-    if (isUntracked) return { bg: 'bg-slate-100', text: 'text-slate-500', label: 'Not checked' };
+    if (isUntracked) return { bg: 'bg-slate-100', text: 'text-slate-500', label: 'Untracked' };
     if (course.seats_remaining > 5) return { bg: 'bg-emerald-500', text: 'text-white', label: 'Available' };
     if (course.seats_remaining > 0) return { bg: 'bg-amber-500', text: 'text-white', label: 'Limited' };
     return { bg: 'bg-slate-400', text: 'text-white', label: 'Full' };
@@ -55,10 +55,10 @@ const CourseCard = ({ course, onTrack, isTracking, isTracked }) => {
           onClick={() => onTrack(course.crn)}
           disabled={isTracking || isTracked}
           className={`w-full py-2.5 rounded-lg font-medium text-sm transition-colors ${isTracked
-              ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-              : isTracking
-                ? 'bg-slate-200 text-slate-500 cursor-wait'
-                : 'bg-slate-800 text-white hover:bg-slate-700'
+            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+            : isTracking
+              ? 'bg-slate-200 text-slate-500 cursor-wait'
+              : 'bg-slate-800 text-white hover:bg-slate-700'
             }`}
         >
           {isTracking ? 'Adding...' : isTracked ? 'Tracking' : 'Track Course'}

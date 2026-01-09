@@ -198,63 +198,16 @@ def search_courses(
 
     courses = courses_query.order_by(models.Course.course_code).limit(50).all()
 
-    # Identify stale courses
-    stale_courses = []
+    # Process courses to hide seat data for untracked courses
     for course in courses:
-        is_stale = False
-        if not course.last_checked:
-            is_stale = True
-        else:
-            time_diff = datetime.now(course.last_checked.tzinfo) - course.last_checked
-            if time_diff.total_seconds() > 900:  # 15 minutes
-                is_stale = True
+        # Check if course has any active tracks
+        has_active_tracks = any(t.is_active for t in course.tracks)
         
-        if is_stale:
-            stale_courses.append(course)
-
-    # Parallel refresh if needed
-    if stale_courses:
-        print(f"DEBUG: Found {len(stale_courses)} stale courses in search results. Refreshing...")
-        
-        def check_seat_worker(course_info):
-            """Worker to check seats for a single course"""
-            crn, term_code = course_info
-            try:
-                from workers.sniper import SeatSniper
-                sniper = SeatSniper()
-                result = sniper.check_seat_availability(crn, term_code)
-                sniper.close()
-                return (crn, result)
-            except Exception as e:
-                print(f"Worker failed for {crn}: {e}")
-                return (crn, None)
-
-        # Prepare work items
-        work_items = [(c.crn, c.term_code) for c in stale_courses]
-        
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            future_to_crn = {executor.submit(check_seat_worker, item): item[0] for item in work_items}
-            
-            for future in concurrent.futures.as_completed(future_to_crn):
-                crn, result = future.result()
-                if result:
-                    # Find and update the course object
-                    course = next((c for c in courses if c.crn == crn), None)
-                    if course:
-                        course.seats_capacity = result['seats_capacity']
-                        course.seats_available = result['seats_available']
-                        course.seats_remaining = result['seats_remaining']
-                        course.last_checked = result['last_checked']
-
-        # Commit updates
-        try:
-            db.commit()
-            # Refresh all to ensure consistency
-            for course in courses:
-                db.refresh(course)
-        except Exception as e:
-            print(f"Failed to commit batch updates: {e}")
-            db.rollback()
+        if not has_active_tracks:
+            # Set placeholder values for untracked courses
+            course.seats_capacity = 999
+            course.seats_available = 999
+            course.seats_remaining = 999
 
     return courses
 
@@ -266,34 +219,14 @@ def get_course_by_crn(crn: str, db: Session = Depends(get_db)):
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
-    # Check for stale data (older than 15 minutes)
-    is_stale = False
-    if not course.last_checked:
-        is_stale = True
-    else:
-        time_diff = datetime.now(course.last_checked.tzinfo) - course.last_checked
-        if time_diff.total_seconds() > 900:  # 15 minutes
-            is_stale = True
-
-    if is_stale:
-        try:
-            from workers.sniper import SeatSniper
-            # Run sniper check
-            sniper = SeatSniper()
-            seat_data = sniper.check_seat_availability(course.crn, course.term_code)
-            
-            if seat_data:
-                # Update course in our session
-                course.seats_capacity = seat_data['seats_capacity']
-                course.seats_available = seat_data['seats_available']
-                course.seats_remaining = seat_data['seats_remaining']
-                course.last_checked = seat_data['last_checked']
-                db.commit()
-                db.refresh(course)
-            
-            sniper.close()
-        except Exception as e:
-            print(f"Failed to refresh stale course data: {e}")
+    # Check if course has any active tracks
+    has_active_tracks = any(t.is_active for t in course.tracks)
+    
+    if not has_active_tracks:
+        # Set placeholder values for untracked courses
+        course.seats_capacity = 999
+        course.seats_available = 999
+        course.seats_remaining = 999
 
     return course
 
