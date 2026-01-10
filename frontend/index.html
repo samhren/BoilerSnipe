@@ -3,39 +3,112 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/boilersnipe.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Favicon - Multiple formats for Google and all browsers -->
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+
   <!-- Primary Meta Tags -->
-  <title>BoilerSnipe - Purdue Course Seat Tracker</title>
-  <meta name="title" content="BoilerSnipe - Purdue Course Seat Tracker" />
+  <title>BoilerSnipe - Purdue Course Seat Tracker | Get Class Notifications</title>
+  <meta name="title" content="BoilerSnipe - Purdue Course Seat Tracker | Get Class Notifications" />
   <meta name="description"
-    content="Get instant email notifications when seats open up in your Purdue courses. Track course availability and never miss a spot again." />
+    content="Free Purdue course seat tracker. Get instant email notifications when seats open in your classes. Never miss course registration again. Track CS, Engineering, and all Purdue courses." />
   <meta name="keywords"
-    content="Purdue, course tracker, seat availability, class notifications, Purdue University, course registration, seat sniper" />
+    content="Purdue course tracker, Purdue seat availability, Purdue class notifications, Purdue University course registration, Purdue seat sniper, Purdue class tracker, Purdue waitlist, Purdue course sniper, Boilermaker course tracker, West Lafayette class finder, Purdue open seats, myPurdue course, Purdue scheduling" />
   <meta name="author" content="BoilerSnipe" />
   <meta name="theme-color" content="#0f172a" />
+  <meta name="application-name" content="BoilerSnipe" />
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://boilersnipe.com/" />
   <meta property="og:title" content="BoilerSnipe - Purdue Course Seat Tracker" />
   <meta property="og:description"
-    content="Get instant email notifications when seats open up in your Purdue courses. Track course availability and never miss a spot again." />
+    content="Free Purdue course seat tracker. Get instant email notifications when seats open in your classes. Never miss course registration again." />
   <meta property="og:image" content="https://boilersnipe.com/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta property="og:site_name" content="BoilerSnipe" />
+  <meta property="og:locale" content="en_US" />
 
   <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image" />
-  <meta property="twitter:url" content="https://boilersnipe.com/" />
-  <meta property="twitter:title" content="BoilerSnipe - Purdue Course Seat Tracker" />
-  <meta property="twitter:description"
-    content="Get instant email notifications when seats open up in your Purdue courses. Track course availability and never miss a spot again." />
-  <meta property="twitter:image" content="https://boilersnipe.com/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://boilersnipe.com/" />
+  <meta name="twitter:title" content="BoilerSnipe - Purdue Course Seat Tracker" />
+  <meta name="twitter:description"
+    content="Free Purdue course seat tracker. Get instant email notifications when seats open in your classes. Never miss course registration again." />
+  <meta name="twitter:image" content="https://boilersnipe.com/og-image.png" />
 
   <!-- Additional SEO -->
   <link rel="canonical" href="https://boilersnipe.com/" />
-  <meta name="robots" content="index, follow" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <meta name="googlebot" content="index, follow" />
+
+  <!-- Structured Data - Organization -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "BoilerSnipe",
+    "alternateName": "Purdue Course Seat Tracker",
+    "url": "https://boilersnipe.com",
+    "description": "Free Purdue course seat tracker. Get instant email notifications when seats open in your classes.",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "5",
+      "ratingCount": "1"
+    },
+    "creator": {
+      "@type": "Organization",
+      "name": "BoilerSnipe"
+    }
+  }
+  </script>
+
+  <!-- Structured Data - FAQ -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does BoilerSnipe work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "BoilerSnipe monitors Purdue course availability and sends you instant email notifications when a seat opens up in your tracked classes."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is BoilerSnipe free?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, BoilerSnipe is completely free for Purdue students to track course seat availability."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What Purdue courses can I track?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You can track any course offered at Purdue University including CS, Engineering, Science, Liberal Arts, and all other departments."
+        }
+      }
+    ]
+  }
+  </script>
 
   <!-- Rybbit -->
   <script src="https://backend-production-f68f.up.railway.app/api/script.js" data-site-id="1" defer></script>
