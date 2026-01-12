@@ -4,9 +4,48 @@ Email notification service using Resend
 
 import os
 import sys
+import time
+import threading
+from collections import deque
 from typing import Tuple, Optional
 from pathlib import Path
 import resend
+
+
+class RateLimiter:
+    """Simple rate limiter using a sliding window approach."""
+
+    def __init__(self, max_requests: int = 10, window_seconds: float = 1.0):
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self.timestamps: deque = deque()
+        self.lock = threading.Lock()
+
+    def wait_if_needed(self):
+        """Block until we're under the rate limit."""
+        with self.lock:
+            now = time.time()
+
+            # Remove timestamps outside the window
+            while self.timestamps and self.timestamps[0] < now - self.window_seconds:
+                self.timestamps.popleft()
+
+            # If we're at the limit, wait until the oldest request falls outside the window
+            if len(self.timestamps) >= self.max_requests:
+                sleep_time = self.timestamps[0] - (now - self.window_seconds)
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
+                    # Clean up again after sleeping
+                    now = time.time()
+                    while self.timestamps and self.timestamps[0] < now - self.window_seconds:
+                        self.timestamps.popleft()
+
+            # Record this request
+            self.timestamps.append(time.time())
+
+
+# Global rate limiter for email sending (10 emails per second max)
+_email_rate_limiter = RateLimiter(max_requests=10, window_seconds=1.0)
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -29,6 +68,9 @@ def send_email_notification(to_email: str, subject: str, html_content: str) -> T
     if not settings.RESEND_API_KEY:
         print("⚠️  Resend not configured. Set RESEND_API_KEY in .env")
         return False, "Resend API key not configured"
+
+    # Rate limit: wait if we've sent too many emails recently
+    _email_rate_limiter.wait_if_needed()
 
     resend.api_key = settings.RESEND_API_KEY
 
