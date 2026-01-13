@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Float
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Float, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -99,3 +99,58 @@ class NotificationLog(Base):
     error_message = Column(String, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class GradeDistribution(Base):
+    """Historical grade distribution for courses by instructor and semester"""
+    __tablename__ = "grade_distributions"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Course identification
+    subject = Column(String, index=True, nullable=False)  # e.g., "CS"
+    course_number = Column(String, index=True, nullable=False)  # e.g., "18000"
+    title = Column(String)  # e.g., "Problem Solving And OO Programming"
+
+    # Section details
+    academic_period = Column(String, index=True, nullable=False)  # e.g., "202510"
+    academic_period_desc = Column(String)  # e.g., "Fall 2024"
+    section = Column(String)  # e.g., "001"
+    crn = Column(String, index=True)  # e.g., "17446"
+    instructor = Column(String, index=True)  # e.g., "Dunsmore, Hubert E."
+
+    # Letter grade percentages (as decimals 0.0-1.0)
+    grade_a_plus = Column(Float, nullable=True)
+    grade_a = Column(Float, nullable=True)
+    grade_a_minus = Column(Float, nullable=True)
+    grade_b_plus = Column(Float, nullable=True)
+    grade_b = Column(Float, nullable=True)
+    grade_b_minus = Column(Float, nullable=True)
+    grade_c_plus = Column(Float, nullable=True)
+    grade_c = Column(Float, nullable=True)
+    grade_c_minus = Column(Float, nullable=True)
+    grade_d_plus = Column(Float, nullable=True)
+    grade_d = Column(Float, nullable=True)
+    grade_d_minus = Column(Float, nullable=True)
+    grade_e = Column(Float, nullable=True)  # Some use E instead of F
+    grade_f = Column(Float, nullable=True)
+
+    # Other grade types
+    grade_w = Column(Float, nullable=True)  # Withdrawal
+    grade_i = Column(Float, nullable=True)  # Incomplete
+    grade_p = Column(Float, nullable=True)  # Pass
+    grade_n = Column(Float, nullable=True)  # No grade
+    grade_s = Column(Float, nullable=True)  # Satisfactory
+    grade_u = Column(Float, nullable=True)  # Unsatisfactory
+    grade_au = Column(Float, nullable=True)  # Audit
+    grade_pi = Column(Float, nullable=True)  # Pass/Incomplete
+    grade_si = Column(Float, nullable=True)  # Satisfactory/Incomplete
+
+    # Metadata
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Composite indexes for efficient lookups
+    __table_args__ = (
+        Index('ix_grade_subject_course', 'subject', 'course_number'),
+        Index('ix_grade_instructor_lookup', 'subject', 'course_number', 'instructor'),
+    )

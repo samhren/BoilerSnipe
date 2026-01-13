@@ -221,7 +221,7 @@ def get_course_by_crn(crn: str, db: Session = Depends(get_db)):
 
     # Check if course has any active tracks
     has_active_tracks = any(t.is_active for t in course.tracks)
-    
+
     if not has_active_tracks:
         # Set placeholder values for untracked courses
         course.seats_capacity = 999
@@ -229,6 +229,128 @@ def get_course_by_crn(crn: str, db: Session = Depends(get_db)):
         course.seats_remaining = 999
 
     return course
+
+
+# Grade Distribution Endpoints
+@app.get("/api/grades/{course_code}", response_model=schemas.GradeDistributionSummary)
+@limiter.limit("60/minute")
+def get_grade_distribution(
+    request: Request,
+    course_code: str,
+    instructor: str = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Get grade distribution for a course.
+
+    course_code: Course code like "CS 18000" or "MA 26100"
+    instructor: Optional filter by instructor name (partial match)
+    """
+    # Parse course_code into subject and number
+    parts = course_code.strip().split()
+    if len(parts) < 2:
+        raise HTTPException(status_code=400, detail="Invalid course code format. Use 'CS 18000' format.")
+
+    subject = parts[0].upper()
+    course_number = parts[1]
+
+    # Build query
+    query = db.query(models.GradeDistribution).filter(
+        models.GradeDistribution.subject == subject,
+        models.GradeDistribution.course_number == course_number
+    )
+
+    if instructor:
+        query = query.filter(models.GradeDistribution.instructor.ilike(f"%{instructor}%"))
+
+    records = query.order_by(
+        models.GradeDistribution.academic_period.desc(),
+        models.GradeDistribution.instructor
+    ).all()
+
+    if not records:
+        raise HTTPException(status_code=404, detail="No grade data found for this course")
+
+    # Calculate aggregates
+    def safe_avg(values):
+        valid = [v for v in values if v is not None]
+        return sum(valid) / len(valid) if valid else None
+
+    def combine_grades(*fields):
+        """Sum multiple grade fields for a record"""
+        values = []
+        for record in records:
+            total = 0
+            count = 0
+            for field in fields:
+                val = getattr(record, field, None)
+                if val is not None:
+                    total += val
+                    count += 1
+            if count > 0:
+                values.append(total)
+        return values
+
+    # Build response
+    return schemas.GradeDistributionSummary(
+        subject=subject,
+        course_number=course_number,
+        title=records[0].title,
+        total_sections=len(records),
+        semesters=list(set(r.academic_period_desc for r in records if r.academic_period_desc)),
+        instructors=list(set(r.instructor for r in records if r.instructor)),
+        # Combined averages
+        avg_a=safe_avg(combine_grades('grade_a_plus', 'grade_a', 'grade_a_minus')),
+        avg_b=safe_avg(combine_grades('grade_b_plus', 'grade_b', 'grade_b_minus')),
+        avg_c=safe_avg(combine_grades('grade_c_plus', 'grade_c', 'grade_c_minus')),
+        avg_d=safe_avg(combine_grades('grade_d_plus', 'grade_d', 'grade_d_minus')),
+        avg_f=safe_avg(combine_grades('grade_e', 'grade_f')),
+        avg_w=safe_avg([r.grade_w for r in records]),
+        # Individual plus/minus breakdowns
+        avg_a_plus=safe_avg([r.grade_a_plus for r in records]),
+        avg_a_base=safe_avg([r.grade_a for r in records]),
+        avg_a_minus=safe_avg([r.grade_a_minus for r in records]),
+        avg_b_plus=safe_avg([r.grade_b_plus for r in records]),
+        avg_b_base=safe_avg([r.grade_b for r in records]),
+        avg_b_minus=safe_avg([r.grade_b_minus for r in records]),
+        avg_c_plus=safe_avg([r.grade_c_plus for r in records]),
+        avg_c_base=safe_avg([r.grade_c for r in records]),
+        avg_c_minus=safe_avg([r.grade_c_minus for r in records]),
+        avg_d_plus=safe_avg([r.grade_d_plus for r in records]),
+        avg_d_base=safe_avg([r.grade_d for r in records]),
+        avg_d_minus=safe_avg([r.grade_d_minus for r in records]),
+        records=[schemas.GradeDistributionResponse.model_validate(r) for r in records]
+    )
+
+
+@app.get("/api/grades", response_model=List[schemas.GradeDistributionResponse])
+@limiter.limit("60/minute")
+def search_grades(
+    request: Request,
+    subject: str = None,
+    course_number: str = None,
+    instructor: str = None,
+    academic_period: str = None,
+    limit: int = 50,
+    db: Session = Depends(get_db)
+):
+    """Search grade distributions with flexible filters."""
+    query = db.query(models.GradeDistribution)
+
+    if subject:
+        query = query.filter(models.GradeDistribution.subject == subject.upper())
+    if course_number:
+        query = query.filter(models.GradeDistribution.course_number == course_number)
+    if instructor:
+        query = query.filter(models.GradeDistribution.instructor.ilike(f"%{instructor}%"))
+    if academic_period:
+        query = query.filter(models.GradeDistribution.academic_period == academic_period)
+
+    records = query.order_by(
+        models.GradeDistribution.academic_period.desc()
+    ).limit(limit).all()
+
+    return records
 
 
 # Track Endpoints

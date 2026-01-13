@@ -113,3 +113,82 @@ class SeatStatus(BaseModel):
     seats_capacity: int
     status: str  # "open" or "closed"
     last_checked: datetime
+
+
+# Grade Distribution Schemas
+class GradeDistributionBase(BaseModel):
+    subject: str
+    course_number: str
+    title: Optional[str] = None
+    academic_period: str
+    academic_period_desc: Optional[str] = None
+    section: Optional[str] = None
+    crn: Optional[str] = None
+    instructor: Optional[str] = None
+
+    # Grade percentages
+    grade_a_plus: Optional[float] = None
+    grade_a: Optional[float] = None
+    grade_a_minus: Optional[float] = None
+    grade_b_plus: Optional[float] = None
+    grade_b: Optional[float] = None
+    grade_b_minus: Optional[float] = None
+    grade_c_plus: Optional[float] = None
+    grade_c: Optional[float] = None
+    grade_c_minus: Optional[float] = None
+    grade_d_plus: Optional[float] = None
+    grade_d: Optional[float] = None
+    grade_d_minus: Optional[float] = None
+    grade_e: Optional[float] = None
+    grade_f: Optional[float] = None
+    grade_w: Optional[float] = None
+    grade_i: Optional[float] = None
+    grade_p: Optional[float] = None
+    grade_n: Optional[float] = None
+    grade_s: Optional[float] = None
+    grade_u: Optional[float] = None
+    grade_au: Optional[float] = None
+    grade_pi: Optional[float] = None
+    grade_si: Optional[float] = None
+
+    class Config:
+        from_attributes = True
+
+
+class GradeDistributionResponse(GradeDistributionBase):
+    id: int
+
+
+class GradeDistributionSummary(BaseModel):
+    """Aggregated grade data for a course"""
+    subject: str
+    course_number: str
+    title: Optional[str] = None
+    total_sections: int
+    semesters: List[str]
+    instructors: List[str]
+
+    # Averaged grades across all sections (combined)
+    avg_a: Optional[float] = None
+    avg_b: Optional[float] = None
+    avg_c: Optional[float] = None
+    avg_d: Optional[float] = None
+    avg_f: Optional[float] = None
+    avg_w: Optional[float] = None
+
+    # Individual plus/minus breakdowns
+    avg_a_plus: Optional[float] = None
+    avg_a_base: Optional[float] = None
+    avg_a_minus: Optional[float] = None
+    avg_b_plus: Optional[float] = None
+    avg_b_base: Optional[float] = None
+    avg_b_minus: Optional[float] = None
+    avg_c_plus: Optional[float] = None
+    avg_c_base: Optional[float] = None
+    avg_c_minus: Optional[float] = None
+    avg_d_plus: Optional[float] = None
+    avg_d_base: Optional[float] = None
+    avg_d_minus: Optional[float] = None
+
+    # Individual records for detailed view
+    records: List[GradeDistributionResponse] = []

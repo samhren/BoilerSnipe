@@ -65,4 +65,10 @@ export const tracksAPI = {
   delete: (trackId) => api.delete(`/api/tracks/${trackId}`),
 };
 
+// Grades API
+export const gradesAPI = {
+  getByCourseCode: (courseCode) => api.get(`/api/grades/${encodeURIComponent(courseCode)}`),
+  search: (params) => api.get('/api/grades', { params }),
+};
+
 export default api;
