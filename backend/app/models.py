@@ -43,6 +43,7 @@ class Course(Base):
     schedule_type = Column(String)  # e.g., "Lecture", "Laboratory", "Recitation"
     term_code = Column(String, nullable=False)  # e.g., "202620"
     term_name = Column(String)  # e.g., "Spring 2026"
+    section = Column(String)  # e.g., "003" or "L15"
 
     # Seat information (updated by sniper)
     seats_available = Column(Integer, default=0)

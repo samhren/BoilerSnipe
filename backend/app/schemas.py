@@ -51,6 +51,7 @@ class CourseBase(BaseModel):
     schedule_type: Optional[str] = None
     term_code: str
     term_name: Optional[str] = None
+    section: Optional[str] = None
 
 
 class CourseResponse(CourseBase):

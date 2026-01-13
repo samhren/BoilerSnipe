@@ -140,6 +140,20 @@ class InventoryScraper:
         match = re.search(pattern, title)
         return match.group(1) if match else None
 
+    def extract_section_from_title(self, title: str) -> Optional[str]:
+        """
+        Extract section from course title.
+        Example: "Elementary Linear Algebra - 22126 - MA 35100 - 021" returns "021"
+        Example: "Systems Programming - 35151 - CS 25200 - L15" returns "L15"
+        """
+        # The section is usually the last part after the last dash
+        # We can split by ' - ' and take the last element, but let's be safer
+        # Format: Title - CRN - Code - Section
+        parts = title.split(' - ')
+        if len(parts) >= 4:
+            return parts[-1].strip()
+        return None
+
     def scrape_term_subjects(
         self,
         term_code: str,
@@ -266,6 +280,7 @@ class InventoryScraper:
                 # Extract CRN and course code using existing regex methods
                 crn = self.extract_crn_from_title(full_title)
                 course_code = self.extract_course_code(full_title)
+                section = self.extract_section_from_title(full_title)
 
                 if not crn or not course_code:
                     continue
@@ -311,6 +326,7 @@ class InventoryScraper:
                     'crn': crn,
                     'course_code': course_code,
                     'title': course_name,
+                    'section': section,
                     'instructor': instructor or "TBA",
                     'time': time_info or "TBA",
                     'days': days or "TBA",

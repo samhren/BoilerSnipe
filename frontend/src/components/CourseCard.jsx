@@ -264,6 +264,12 @@ const CourseCard = ({ course, onTrack, isTracking, isTracked }) => {
             <span className="text-slate-400 w-20">CRN</span>
             <span className="text-slate-700 font-mono">{course.crn}</span>
           </div>
+          {course.section && (
+            <div className="flex">
+              <span className="text-slate-400 w-20">Section</span>
+              <span className="text-slate-700 font-mono">{course.section}</span>
+            </div>
+          )}
           <div className="flex">
             <span className="text-slate-400 w-20">Time</span>
             <span className="text-slate-700">{course.time || 'TBA'} {course.days && `(${course.days})`}</span>
