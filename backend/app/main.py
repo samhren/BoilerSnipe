@@ -254,19 +254,9 @@ def get_grade_distribution(
     subject = parts[0].upper()
     course_number = parts[1]
 
-    # Build query
-    query = db.query(models.GradeDistribution).filter(
-        models.GradeDistribution.subject == subject,
-        models.GradeDistribution.course_number == course_number
-    )
-
-    if instructor:
-        query = query.filter(models.GradeDistribution.instructor.ilike(f"%{instructor}%"))
-
-    records = query.order_by(
-        models.GradeDistribution.academic_period.desc(),
-        models.GradeDistribution.instructor
-    ).all()
+    # Load from JSON store instead of DB
+    from . import grades_store
+    records = grades_store.get_by_course(subject, course_number, instructor)
 
     if not records:
         raise HTTPException(status_code=404, detail="No grade data found for this course")
@@ -319,7 +309,7 @@ def get_grade_distribution(
         avg_d_plus=safe_avg([r.grade_d_plus for r in records]),
         avg_d_base=safe_avg([r.grade_d for r in records]),
         avg_d_minus=safe_avg([r.grade_d_minus for r in records]),
-        records=[schemas.GradeDistributionResponse.model_validate(r) for r in records]
+        records=[schemas.GradeDistributionResponse.model_validate(r.__dict__) for r in records]
     )
 
 
@@ -334,23 +324,11 @@ def search_grades(
     limit: int = 50,
     db: Session = Depends(get_db)
 ):
-    """Search grade distributions with flexible filters."""
-    query = db.query(models.GradeDistribution)
-
-    if subject:
-        query = query.filter(models.GradeDistribution.subject == subject.upper())
-    if course_number:
-        query = query.filter(models.GradeDistribution.course_number == course_number)
-    if instructor:
-        query = query.filter(models.GradeDistribution.instructor.ilike(f"%{instructor}%"))
-    if academic_period:
-        query = query.filter(models.GradeDistribution.academic_period == academic_period)
-
-    records = query.order_by(
-        models.GradeDistribution.academic_period.desc()
-    ).limit(limit).all()
-
-    return records
+    """Search grade distributions with flexible filters (JSON-backed)."""
+    from . import grades_store
+    results = grades_store.search(subject, course_number, instructor, academic_period, limit)
+    # Convert to Pydantic-compatible dicts
+    return [schemas.GradeDistributionResponse.model_validate(r.__dict__) for r in results]
 
 
 # Track Endpoints
