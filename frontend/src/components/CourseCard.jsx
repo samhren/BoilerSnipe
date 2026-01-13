@@ -83,90 +83,12 @@ const GradeSection = ({ courseCode, instructor }) => {
           )}
 
           {grades && !error && (
-            <div className="space-y-4">
-              {/* Course-wide averages */}
-              <div>
-                <p className="text-xs text-slate-400 mb-2">
-                  Based on {grades.total_sections} sections across {grades.semesters?.length || 0} semesters
-                </p>
-                <div className="space-y-1">
-                  {/* A grades */}
-                  <div className="flex items-center gap-1">
-                    <span className="w-5 text-xs font-medium text-slate-500">A</span>
-                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden flex">
-                      {grades.avg_a_plus > 0 && (
-                        <div className="h-full bg-emerald-600" style={{ width: `${(grades.avg_a_plus || 0) * 100}%` }} title={`A+: ${((grades.avg_a_plus || 0) * 100).toFixed(1)}%`} />
-                      )}
-                      {grades.avg_a_base > 0 && (
-                        <div className="h-full bg-emerald-500" style={{ width: `${(grades.avg_a_base || 0) * 100}%` }} title={`A: ${((grades.avg_a_base || 0) * 100).toFixed(1)}%`} />
-                      )}
-                      {grades.avg_a_minus > 0 && (
-                        <div className="h-full bg-emerald-400" style={{ width: `${(grades.avg_a_minus || 0) * 100}%` }} title={`A-: ${((grades.avg_a_minus || 0) * 100).toFixed(1)}%`} />
-                      )}
-                    </div>
-                    <span className="w-12 text-xs text-slate-600 text-right">{((grades.avg_a || 0) * 100).toFixed(1)}%</span>
-                  </div>
-                  {/* B grades */}
-                  <div className="flex items-center gap-1">
-                    <span className="w-5 text-xs font-medium text-slate-500">B</span>
-                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden flex">
-                      {grades.avg_b_plus > 0 && (
-                        <div className="h-full bg-lime-600" style={{ width: `${(grades.avg_b_plus || 0) * 100}%` }} title={`B+: ${((grades.avg_b_plus || 0) * 100).toFixed(1)}%`} />
-                      )}
-                      {grades.avg_b_base > 0 && (
-                        <div className="h-full bg-lime-500" style={{ width: `${(grades.avg_b_base || 0) * 100}%` }} title={`B: ${((grades.avg_b_base || 0) * 100).toFixed(1)}%`} />
-                      )}
-                      {grades.avg_b_minus > 0 && (
-                        <div className="h-full bg-lime-400" style={{ width: `${(grades.avg_b_minus || 0) * 100}%` }} title={`B-: ${((grades.avg_b_minus || 0) * 100).toFixed(1)}%`} />
-                      )}
-                    </div>
-                    <span className="w-12 text-xs text-slate-600 text-right">{((grades.avg_b || 0) * 100).toFixed(1)}%</span>
-                  </div>
-                  {/* C grades */}
-                  <div className="flex items-center gap-1">
-                    <span className="w-5 text-xs font-medium text-slate-500">C</span>
-                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden flex">
-                      {grades.avg_c_plus > 0 && (
-                        <div className="h-full bg-amber-600" style={{ width: `${(grades.avg_c_plus || 0) * 100}%` }} title={`C+: ${((grades.avg_c_plus || 0) * 100).toFixed(1)}%`} />
-                      )}
-                      {grades.avg_c_base > 0 && (
-                        <div className="h-full bg-amber-500" style={{ width: `${(grades.avg_c_base || 0) * 100}%` }} title={`C: ${((grades.avg_c_base || 0) * 100).toFixed(1)}%`} />
-                      )}
-                      {grades.avg_c_minus > 0 && (
-                        <div className="h-full bg-amber-400" style={{ width: `${(grades.avg_c_minus || 0) * 100}%` }} title={`C-: ${((grades.avg_c_minus || 0) * 100).toFixed(1)}%`} />
-                      )}
-                    </div>
-                    <span className="w-12 text-xs text-slate-600 text-right">{((grades.avg_c || 0) * 100).toFixed(1)}%</span>
-                  </div>
-                  {/* D grades */}
-                  <div className="flex items-center gap-1">
-                    <span className="w-5 text-xs font-medium text-slate-500">D</span>
-                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden flex">
-                      {grades.avg_d_plus > 0 && (
-                        <div className="h-full bg-orange-600" style={{ width: `${(grades.avg_d_plus || 0) * 100}%` }} title={`D+: ${((grades.avg_d_plus || 0) * 100).toFixed(1)}%`} />
-                      )}
-                      {grades.avg_d_base > 0 && (
-                        <div className="h-full bg-orange-500" style={{ width: `${(grades.avg_d_base || 0) * 100}%` }} title={`D: ${((grades.avg_d_base || 0) * 100).toFixed(1)}%`} />
-                      )}
-                      {grades.avg_d_minus > 0 && (
-                        <div className="h-full bg-orange-400" style={{ width: `${(grades.avg_d_minus || 0) * 100}%` }} title={`D-: ${((grades.avg_d_minus || 0) * 100).toFixed(1)}%`} />
-                      )}
-                    </div>
-                    <span className="w-12 text-xs text-slate-600 text-right">{((grades.avg_d || 0) * 100).toFixed(1)}%</span>
-                  </div>
-                  {/* F grade */}
-                  <GradeBar label="F" percentage={grades.avg_f} color="bg-red-500" />
-                  {grades.avg_w > 0.01 && (
-                    <GradeBar label="W" percentage={grades.avg_w} color="bg-slate-400" />
-                  )}
-                </div>
-              </div>
-
-              {/* Instructor-specific data if available */}
-              {instructorRecords.length > 0 && (
-                <div className="pt-2 border-t border-slate-50">
-                  <p className="text-xs font-medium text-slate-600 mb-2">
-                    This Instructor ({instructorRecords.length} sections)
+            <div className="space-y-3">
+              {/* Instructor-specific data - shown first if available */}
+              {instructorRecords.length > 0 ? (
+                <div>
+                  <p className="text-xs text-slate-500 mb-2">
+                    {instructor?.split(',')[0]} ({instructorRecords.length} {instructorRecords.length === 1 ? 'section' : 'sections'})
                   </p>
                   <div className="space-y-1.5">
                     {(() => {
@@ -180,6 +102,8 @@ const GradeSection = ({ courseCode, instructor }) => {
                         sum + (r.grade_d_plus || 0) + (r.grade_d || 0) + (r.grade_d_minus || 0), 0) / instructorRecords.length;
                       const avgF = instructorRecords.reduce((sum, r) =>
                         sum + (r.grade_e || 0) + (r.grade_f || 0), 0) / instructorRecords.length;
+                      const avgW = instructorRecords.reduce((sum, r) =>
+                        sum + (r.grade_w || 0), 0) / instructorRecords.length;
 
                       return (
                         <>
@@ -188,9 +112,25 @@ const GradeSection = ({ courseCode, instructor }) => {
                           <GradeBar label="C" percentage={avgC} color="bg-amber-500" />
                           <GradeBar label="D" percentage={avgD} color="bg-orange-500" />
                           <GradeBar label="F" percentage={avgF} color="bg-red-500" />
+                          {avgW > 0.01 && <GradeBar label="W" percentage={avgW} color="bg-slate-400" />}
                         </>
                       );
                     })()}
+                  </div>
+                </div>
+              ) : (
+                /* Fall back to course-wide if no instructor data */
+                <div>
+                  <p className="text-xs text-slate-400 mb-2">
+                    All professors ({grades.total_sections} sections)
+                  </p>
+                  <div className="space-y-1.5">
+                    <GradeBar label="A" percentage={grades.avg_a} color="bg-emerald-500" />
+                    <GradeBar label="B" percentage={grades.avg_b} color="bg-lime-500" />
+                    <GradeBar label="C" percentage={grades.avg_c} color="bg-amber-500" />
+                    <GradeBar label="D" percentage={grades.avg_d} color="bg-orange-500" />
+                    <GradeBar label="F" percentage={grades.avg_f} color="bg-red-500" />
+                    {grades.avg_w > 0.01 && <GradeBar label="W" percentage={grades.avg_w} color="bg-slate-400" />}
                   </div>
                 </div>
               )}

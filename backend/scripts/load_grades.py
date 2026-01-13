@@ -167,9 +167,14 @@ def load_grades(xlsx_path: str = 'grades.xlsx', clear_existing: bool = False):
             records = process_sheet(df_raw, sheet_name)
 
             if records:
-                # Bulk insert
-                db.bulk_insert_mappings(GradeDistribution, records)
-                db.commit()
+                # Bulk insert in batches to avoid timeouts
+                batch_size = 500
+                for i in range(0, len(records), batch_size):
+                    batch = records[i:i + batch_size]
+                    db.bulk_insert_mappings(GradeDistribution, batch)
+                    db.commit()
+                    if i > 0 and i % 5000 == 0:
+                        logger.info(f"    ... {i}/{len(records)} inserted")
 
             logger.info(f"  Inserted {len(records)} records")
             total_records += len(records)
