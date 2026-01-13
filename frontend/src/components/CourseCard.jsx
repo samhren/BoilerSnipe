@@ -44,9 +44,28 @@ const GradeSection = ({ courseCode, instructor }) => {
   };
 
   // Filter records for current instructor if available
-  const instructorRecords = grades?.records?.filter(
-    r => instructor && r.instructor?.toLowerCase().includes(instructor.toLowerCase().split(',')[0])
-  ) || [];
+  const instructorRecords = grades?.records?.filter(r => {
+    if (!instructor) return false;
+    // Handle "Firstname Lastname" format from website vs "Lastname, Firstname" in grades
+    // Also handle potential comma-separated list of instructors by taking the first one
+    const primaryName = instructor.split(',')[0].trim().toLowerCase();
+    const nameParts = primaryName.split(' ').filter(p => p.trim());
+    if (nameParts.length === 0) return false;
+
+    const lastName = nameParts[nameParts.length - 1];
+    const recordName = r.instructor?.toLowerCase() || '';
+
+    // Record must contain the last name
+    if (!recordName.includes(lastName)) return false;
+
+    // If we have a first name, it should also be present to avoid false positives (e.g. Smith)
+    if (nameParts.length > 1) {
+      const firstName = nameParts[0];
+      return recordName.includes(firstName);
+    }
+
+    return true;
+  }) || [];
 
   return (
     <div className="border-t border-slate-100 mt-3">
@@ -81,6 +100,7 @@ const GradeSection = ({ courseCode, instructor }) => {
           {error && (
             <p className="text-sm text-slate-400 py-2 text-center">{error}</p>
           )}
+
 
           {grades && !error && (
             <div className="space-y-3">
@@ -119,19 +139,8 @@ const GradeSection = ({ courseCode, instructor }) => {
                   </div>
                 </div>
               ) : (
-                /* Fall back to course-wide if no instructor data */
-                <div>
-                  <p className="text-xs text-slate-400 mb-2">
-                    All professors ({grades.total_sections} sections)
-                  </p>
-                  <div className="space-y-1.5">
-                    <GradeBar label="A" percentage={grades.avg_a} color="bg-emerald-500" />
-                    <GradeBar label="B" percentage={grades.avg_b} color="bg-lime-500" />
-                    <GradeBar label="C" percentage={grades.avg_c} color="bg-amber-500" />
-                    <GradeBar label="D" percentage={grades.avg_d} color="bg-orange-500" />
-                    <GradeBar label="F" percentage={grades.avg_f} color="bg-red-500" />
-                    {grades.avg_w > 0.01 && <GradeBar label="W" percentage={grades.avg_w} color="bg-slate-400" />}
-                  </div>
+                <div className="py-2 text-center text-xs text-slate-400">
+                  No grade data available for this instructor
                 </div>
               )}
             </div>
@@ -195,8 +204,10 @@ const CourseCard = ({ course, onTrack, isTracking, isTracked }) => {
           </div>
         </div>
 
-        {/* Grade Distribution Section */}
-        <GradeSection courseCode={course.course_code} instructor={course.instructor} />
+        {/* Grade Distribution Section - Only show for Lecture sections */}
+        {course.schedule_type === 'Lecture' && (
+          <GradeSection courseCode={course.course_code} instructor={course.instructor} />
+        )}
 
         <button
           onClick={() => onTrack(course.crn)}
