@@ -7,8 +7,8 @@ const StackedGradeBar = ({ data }) => {
   const total = validSegments.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <div className="w-full pt-1 pb-5">
-      <div className="h-5 w-full flex rounded-md overflow-visible bg-slate-100">
+    <div className="w-full mb-2">
+      <div className="h-4 w-full flex rounded-md overflow-visible bg-slate-100">
         {validSegments.map((segment, index) => {
           const width = total > 0 ? (segment.value / total) * 100 : 0;
 
@@ -20,11 +20,11 @@ const StackedGradeBar = ({ data }) => {
             >
               {/* Label directly under the bar - distinct from tooltip */}
               {width > 3 && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 flex flex-col items-center">
-                  <span className="text-[10px] font-bold text-slate-700 whitespace-nowrap leading-tight">
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-0.5 flex flex-col items-center">
+                  <span className="text-[9px] font-bold text-slate-700 whitespace-nowrap leading-none">
                     {segment.label}
                   </span>
-                  <span className="text-[9px] text-slate-500 whitespace-nowrap leading-tight">
+                  <span className="text-[8px] text-slate-500 whitespace-nowrap leading-none mt-0.5">
                     {(segment.value * 100).toFixed(0)}%
                   </span>
                 </div>
@@ -141,7 +141,7 @@ const GradeSection = ({ courseCode, instructor }) => {
           )}
 
           {grades && !error && (
-            <div className="space-y-6">
+            <div className="space-y-2">
               {/* Instructor-specific data - shown first if available */}
               {sortedSemesters.length > 0 ? (
                 sortedSemesters.map((semesterGroup) => {
@@ -168,9 +168,9 @@ const GradeSection = ({ courseCode, instructor }) => {
 
                   return (
                     <div key={semesterGroup.period}>
-                      <div className="flex items-baseline justify-between mb-1">
-                        <h4 className="text-sm font-semibold text-slate-700">{semesterGroup.description}</h4>
-                        <span className="text-xs text-slate-500">
+                      <div className="flex items-baseline justify-between mb-0.5">
+                        <h4 className="text-xs font-semibold text-slate-700">{semesterGroup.description}</h4>
+                        <span className="text-[10px] text-slate-500">
                           {records.length} {records.length === 1 ? 'section' : 'sections'}
                         </span>
                       </div>
