@@ -18,15 +18,17 @@ const StackedGradeBar = ({ data }) => {
               className={`${segment.color} h-full relative group first:rounded-l-md last:rounded-r-md transition-all duration-300 hover:brightness-110`}
               style={{ width: `${width}%` }}
             >
-              {/* Label directly under the bar - always shown */}
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 flex flex-col items-center">
-                <span className="text-[10px] font-bold text-slate-700 whitespace-nowrap leading-tight">
-                  {segment.label}
-                </span>
-                <span className="text-[9px] text-slate-500 whitespace-nowrap leading-tight">
-                  {(segment.value * 100).toFixed(0)}%
-                </span>
-              </div>
+              {/* Label directly under the bar - distinct from tooltip */}
+              {width > 3 && (
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 flex flex-col items-center">
+                  <span className="text-[10px] font-bold text-slate-700 whitespace-nowrap leading-tight">
+                    {segment.label}
+                  </span>
+                  <span className="text-[9px] text-slate-500 whitespace-nowrap leading-tight">
+                    {(segment.value * 100).toFixed(0)}%
+                  </span>
+                </div>
+              )}
 
               {/* Tooltip on hover */}
               <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap pointer-events-none z-10 transition-opacity">
