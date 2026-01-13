@@ -149,6 +149,29 @@ const GradeSection = ({ courseCode, instructor }) => {
                   const calculateAvg = (key) =>
                     records.reduce((sum, r) => sum + (r[key] || 0), 0) / records.length;
 
+                  // Calculate Average GPA based on the average distribution
+                  let totalGpaPoints = 0;
+                  let totalGradedWeight = 0;
+
+                  // Use a local map for GPA points if not defined globally, or defining it here
+                  const GPA_POINTS = {
+                    'grade_a_plus': 4.0, 'grade_a': 4.0, 'grade_a_minus': 3.7,
+                    'grade_b_plus': 3.3, 'grade_b': 3.0, 'grade_b_minus': 2.7,
+                    'grade_c_plus': 2.3, 'grade_c': 2.0, 'grade_c_minus': 1.7,
+                    'grade_d_plus': 1.3, 'grade_d': 1.0, 'grade_d_minus': 0.7,
+                    'grade_f': 0.0, 'grade_e': 0.0
+                  };
+
+                  Object.entries(GPA_POINTS).forEach(([key, points]) => {
+                    const avg = calculateAvg(key);
+                    totalGpaPoints += avg * points;
+                    totalGradedWeight += avg;
+                  });
+
+                  const averageGpa = totalGradedWeight > 0
+                    ? (totalGpaPoints / totalGradedWeight).toFixed(2)
+                    : null;
+
                   const data = [
                     { label: 'A+', value: calculateAvg('grade_a_plus'), color: 'bg-emerald-600' },
                     { label: 'A', value: calculateAvg('grade_a'), color: 'bg-emerald-500' },
@@ -169,7 +192,14 @@ const GradeSection = ({ courseCode, instructor }) => {
                   return (
                     <div key={semesterGroup.period}>
                       <div className="flex items-baseline justify-between mb-0.5">
-                        <h4 className="text-xs font-semibold text-slate-700">{semesterGroup.description}</h4>
+                        <h4 className="text-xs font-semibold text-slate-700">
+                          {semesterGroup.description}
+                          {averageGpa && (
+                            <span className="ml-2 font-normal text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                              GPA: {averageGpa}
+                            </span>
+                          )}
+                        </h4>
                         <span className="text-[10px] text-slate-500">
                           {records.length} {records.length === 1 ? 'section' : 'sections'}
                         </span>
