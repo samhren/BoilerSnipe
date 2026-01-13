@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { coursesAPI, tracksAPI } from '../services/api';
 import rybbit from '../services/rybbit';
 import CourseCard from '../components/CourseCard';
@@ -6,7 +7,9 @@ import CourseCard from '../components/CourseCard';
 
 
 const Search = () => {
-  const [query, setQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+  const [query, setQuery] = useState(initialQuery);
   const [courses, setCourses] = useState([]);
   const [trackedCRNs, setTrackedCRNs] = useState(new Set());
   const [loading, setLoading] = useState(false);
@@ -19,6 +22,20 @@ const Search = () => {
     loadTrackedCourses();
   }, []);
 
+  // Keep the URL's query param (?q=) in sync with the current input value
+  useEffect(() => {
+    const current = searchParams.get('q') || '';
+    if (query !== current) {
+      const params = new URLSearchParams(searchParams);
+      if (query && query.trim()) {
+        params.set('q', query);
+      } else {
+        params.delete('q');
+      }
+      setSearchParams(params, { replace: true });
+    }
+  }, [query]);
+
   const loadTrackedCourses = async () => {
     try {
       const response = await tracksAPI.getAll();
@@ -29,15 +46,13 @@ const Search = () => {
     }
   };
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-
+  const performSearch = async (q) => {
+    if (!q.trim()) return;
     try {
       setLoading(true);
       setError('');
       setSearched(true);
-      const response = await coursesAPI.search(query);
+      const response = await coursesAPI.search(q);
       setCourses(response.data);
 
       if (response.data.length === 0) {
@@ -45,11 +60,10 @@ const Search = () => {
       }
 
       rybbit.track('Course Search', {
-        query,
+        query: q,
         count: response.data.length,
         has_results: response.data.length > 0
       });
-
     } catch (err) {
       setError('Failed to search courses');
       console.error(err);
@@ -57,6 +71,20 @@ const Search = () => {
       setLoading(false);
     }
   };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    await performSearch(query);
+  };
+
+  // If arriving with ?q= preset, run the search automatically once
+  useEffect(() => {
+    if (initialQuery && !searched && courses.length === 0 && !loading) {
+      performSearch(initialQuery);
+    }
+    // We only want to run this once on mount for the initialQuery
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const handleTrack = async (crn) => {
