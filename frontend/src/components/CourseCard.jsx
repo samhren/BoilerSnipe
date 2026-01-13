@@ -2,39 +2,37 @@ import { useState } from 'react';
 import { gradesAPI } from '../services/api';
 
 const StackedGradeBar = ({ data }) => {
-  // Filter out zero values and normalize to 100% just in case, though raw averages are used
+  // Filter out zero values and normalize to 100% just in case
   const validSegments = data.filter(d => d.value > 0);
   const total = validSegments.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <div className="w-full">
-      <div className="h-6 w-full flex rounded-md overflow-hidden bg-slate-100">
+    <div className="w-full pt-1 pb-5">
+      <div className="h-5 w-full flex rounded-md overflow-visible bg-slate-100">
         {validSegments.map((segment, index) => {
           const width = total > 0 ? (segment.value / total) * 100 : 0;
+
           return (
             <div
               key={index}
               className={`${segment.color} h-full relative group first:rounded-l-md last:rounded-r-md transition-all duration-300 hover:brightness-110`}
               style={{ width: `${width}%` }}
-              title={`${segment.label}: ${(segment.value * 100).toFixed(1)}%`}
             >
+              {/* Label directly under the bar - always shown */}
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 flex flex-col items-center">
+                <span className="text-[10px] font-bold text-slate-700 whitespace-nowrap leading-tight">
+                  {segment.label}
+                </span>
+                <span className="text-[9px] text-slate-500 whitespace-nowrap leading-tight">
+                  {(segment.value * 100).toFixed(0)}%
+                </span>
+              </div>
+
               {/* Tooltip on hover */}
               <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap pointer-events-none z-10 transition-opacity">
                 {segment.label}: {(segment.value * 100).toFixed(1)}%
                 <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
               </div>
-            </div>
-          );
-        })}
-      </div>
-      {/* Legend for significant chunks */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 justify-between">
-        {validSegments.map((segment, index) => {
-          if (segment.value < 0.05) return null; // Skip tiny segments in legend
-          return (
-            <div key={index} className="flex items-center gap-1.5 text-xs text-slate-600">
-              <div className={`w-2 h-2 rounded-full ${segment.color}`} />
-              <span>{segment.label} <span className="text-slate-400">{(segment.value * 100).toFixed(0)}%</span></span>
             </div>
           );
         })}
@@ -72,8 +70,6 @@ const GradeSection = ({ courseCode, instructor }) => {
   // Filter records for current instructor if available
   const instructorRecords = grades?.records?.filter(r => {
     if (!instructor) return false;
-    // Handle "Firstname Lastname" format from website vs "Lastname, Firstname" in grades
-    // Also handle potential comma-separated list of instructors by taking the first one
     const primaryName = instructor.split(',')[0].trim().toLowerCase();
     const nameParts = primaryName.split(' ').filter(p => p.trim());
     if (nameParts.length === 0) return false;
@@ -81,10 +77,8 @@ const GradeSection = ({ courseCode, instructor }) => {
     const lastName = nameParts[nameParts.length - 1];
     const recordName = r.instructor?.toLowerCase() || '';
 
-    // Record must contain the last name
     if (!recordName.includes(lastName)) return false;
 
-    // If we have a first name, it should also be present to avoid false positives (e.g. Smith)
     if (nameParts.length > 1) {
       const firstName = nameParts[0];
       return recordName.includes(firstName);
@@ -92,6 +86,23 @@ const GradeSection = ({ courseCode, instructor }) => {
 
     return true;
   }) || [];
+
+  // Group records by semester
+  const semesterGroups = instructorRecords.reduce((groups, r) => {
+    const key = r.academic_period;
+    if (!groups[key]) {
+      groups[key] = {
+        period: key,
+        description: r.academic_period_desc || key,
+        records: []
+      };
+    }
+    groups[key].records.push(r);
+    return groups;
+  }, {});
+
+  // Sort by academic_period descending (newest first)
+  const sortedSemesters = Object.values(semesterGroups).sort((a, b) => b.period.localeCompare(a.period));
 
   return (
     <div className="border-t border-slate-100 mt-3">
@@ -127,41 +138,44 @@ const GradeSection = ({ courseCode, instructor }) => {
             <p className="text-sm text-slate-400 py-2 text-center">{error}</p>
           )}
 
-
           {grades && !error && (
-            <div className="space-y-3">
+            <div className="space-y-6">
               {/* Instructor-specific data - shown first if available */}
-              {instructorRecords.length > 0 ? (
-                <div>
-                  <p className="text-xs text-slate-500 mb-2">
-                    {instructor?.split(',')[0]} ({instructorRecords.length} {instructorRecords.length === 1 ? 'section' : 'sections'})
-                  </p>
-                  <div>
-                    {(() => {
-                      const calculateAvg = (key) =>
-                        instructorRecords.reduce((sum, r) => sum + (r[key] || 0), 0) / instructorRecords.length;
+              {sortedSemesters.length > 0 ? (
+                sortedSemesters.map((semesterGroup) => {
+                  const records = semesterGroup.records;
+                  const calculateAvg = (key) =>
+                    records.reduce((sum, r) => sum + (r[key] || 0), 0) / records.length;
 
-                      const data = [
-                        { label: 'A+', value: calculateAvg('grade_a_plus'), color: 'bg-emerald-600' },
-                        { label: 'A', value: calculateAvg('grade_a'), color: 'bg-emerald-500' },
-                        { label: 'A-', value: calculateAvg('grade_a_minus'), color: 'bg-emerald-400' },
-                        { label: 'B+', value: calculateAvg('grade_b_plus'), color: 'bg-lime-500' },
-                        { label: 'B', value: calculateAvg('grade_b'), color: 'bg-lime-400' },
-                        { label: 'B-', value: calculateAvg('grade_b_minus'), color: 'bg-lime-300' },
-                        { label: 'C+', value: calculateAvg('grade_c_plus'), color: 'bg-yellow-500' },
-                        { label: 'C', value: calculateAvg('grade_c'), color: 'bg-yellow-400' },
-                        { label: 'C-', value: calculateAvg('grade_c_minus'), color: 'bg-yellow-300' },
-                        { label: 'D+', value: calculateAvg('grade_d_plus'), color: 'bg-orange-500' },
-                        { label: 'D', value: calculateAvg('grade_d'), color: 'bg-orange-400' },
-                        { label: 'D-', value: calculateAvg('grade_d_minus'), color: 'bg-orange-300' },
-                        { label: 'F', value: calculateAvg('grade_f') + calculateAvg('grade_e'), color: 'bg-red-500' },
-                        { label: 'W', value: calculateAvg('grade_w'), color: 'bg-slate-400' },
-                      ];
+                  const data = [
+                    { label: 'A+', value: calculateAvg('grade_a_plus'), color: 'bg-emerald-600' },
+                    { label: 'A', value: calculateAvg('grade_a'), color: 'bg-emerald-500' },
+                    { label: 'A-', value: calculateAvg('grade_a_minus'), color: 'bg-emerald-400' },
+                    { label: 'B+', value: calculateAvg('grade_b_plus'), color: 'bg-lime-500' },
+                    { label: 'B', value: calculateAvg('grade_b'), color: 'bg-lime-400' },
+                    { label: 'B-', value: calculateAvg('grade_b_minus'), color: 'bg-lime-300' },
+                    { label: 'C+', value: calculateAvg('grade_c_plus'), color: 'bg-yellow-500' },
+                    { label: 'C', value: calculateAvg('grade_c'), color: 'bg-yellow-400' },
+                    { label: 'C-', value: calculateAvg('grade_c_minus'), color: 'bg-yellow-300' },
+                    { label: 'D+', value: calculateAvg('grade_d_plus'), color: 'bg-orange-500' },
+                    { label: 'D', value: calculateAvg('grade_d'), color: 'bg-orange-400' },
+                    { label: 'D-', value: calculateAvg('grade_d_minus'), color: 'bg-orange-300' },
+                    { label: 'F', value: calculateAvg('grade_f') + calculateAvg('grade_e'), color: 'bg-red-500' },
+                    { label: 'W', value: calculateAvg('grade_w'), color: 'bg-slate-400' },
+                  ];
 
-                      return <StackedGradeBar data={data} />;
-                    })()}
-                  </div>
-                </div>
+                  return (
+                    <div key={semesterGroup.period}>
+                      <div className="flex items-baseline justify-between mb-1">
+                        <h4 className="text-sm font-semibold text-slate-700">{semesterGroup.description}</h4>
+                        <span className="text-xs text-slate-500">
+                          {records.length} {records.length === 1 ? 'section' : 'sections'}
+                        </span>
+                      </div>
+                      <StackedGradeBar data={data} />
+                    </div>
+                  );
+                })
               ) : (
                 <div className="py-2 text-center text-xs text-slate-400">
                   No grade data available for this instructor
