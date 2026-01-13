@@ -14,19 +14,11 @@ const DAYS_MAP = [
   { label: 'Sun', value: 'U' },
 ];
 
-const SORT_OPTIONS = [
-  { label: 'Course Code (Asc)', value: 'code_asc' },
-  { label: 'Course Code (Desc)', value: 'code_desc' },
-  { label: 'Seats (High to Low)', value: 'seats_desc' },
-  { label: 'Seats (Low to High)', value: 'seats_asc' },
-];
-
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Initialize state from URL params
   const initialQuery = searchParams.get('q') || '';
-  const initialSort = searchParams.get('sort') || SORT_OPTIONS[0].value;
   const initialDays = searchParams.get('days') ? new Set(searchParams.get('days').split(',')) : new Set();
   const initialTypes = searchParams.get('types') ? new Set(searchParams.get('types').split(',')) : new Set();
 
@@ -38,11 +30,10 @@ const Search = () => {
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
 
-  // Filter & Sort States
+  // Filter States
   const [showFilters, setShowFilters] = useState(initialDays.size > 0 || initialTypes.size > 0);
   const [selectedDays, setSelectedDays] = useState(initialDays);
   const [selectedTypes, setSelectedTypes] = useState(initialTypes);
-  const [sortOption, setSortOption] = useState(initialSort);
 
   useEffect(() => {
     loadTrackedCourses();
@@ -53,10 +44,6 @@ const Search = () => {
     const params = new URLSearchParams();
 
     if (query.trim()) params.set('q', query.trim());
-
-    if (sortOption !== SORT_OPTIONS[0].value) {
-      params.set('sort', sortOption);
-    }
 
     if (selectedDays.size > 0) {
       params.set('days', Array.from(selectedDays).join(','));
@@ -70,7 +57,7 @@ const Search = () => {
     if (params.toString() !== searchParams.toString()) {
       setSearchParams(params, { replace: true });
     }
-  }, [query, sortOption, selectedDays, selectedTypes, setSearchParams, searchParams]);
+  }, [query, selectedDays, selectedTypes, setSearchParams, searchParams]);
 
   const loadTrackedCourses = async () => {
     try {
@@ -136,7 +123,7 @@ const Search = () => {
     }
   };
 
-  // --- Filtering & Sorting Logic ---
+  // --- Filtering Logic ---
 
   // derived available types from the current search results
   const availableTypes = useMemo(() => {
@@ -166,24 +153,8 @@ const Search = () => {
       );
     }
 
-    // 3. Sort
-    result.sort((a, b) => {
-      switch (sortOption) {
-        case 'code_asc':
-          return a.course_code.localeCompare(b.course_code);
-        case 'code_desc':
-          return b.course_code.localeCompare(a.course_code);
-        case 'seats_desc':
-          return (b.seats_remaining || 0) - (a.seats_remaining || 0);
-        case 'seats_asc':
-          return (a.seats_remaining || 0) - (b.seats_remaining || 0);
-        default:
-          return 0;
-      }
-    });
-
     return result;
-  }, [courses, selectedDays, selectedTypes, sortOption]);
+  }, [courses, selectedDays, selectedTypes]);
 
   const toggleDay = (day) => {
     const next = new Set(selectedDays);
@@ -263,20 +234,6 @@ const Search = () => {
                   )}
                 </button>
               </div>
-
-              {/* Sort Control */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <span className="text-sm text-slate-500 whitespace-nowrap">Sort by:</span>
-                <select
-                  value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className="text-sm border-gray-200 rounded-md py-1.5 pl-3 pr-8 w-full sm:w-auto focus:ring-slate-500 focus:border-slate-500"
-                >
-                  {SORT_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
             </div>
 
             {/* Expandable Filter Panel */}
@@ -294,8 +251,8 @@ const Search = () => {
                             key={day.value}
                             onClick={() => toggleDay(day.value)}
                             className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${isSelected
-                                ? 'bg-slate-800 text-white border-slate-800'
-                                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                              ? 'bg-slate-800 text-white border-slate-800'
+                              : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                               }`}
                           >
                             {day.label}
@@ -317,8 +274,8 @@ const Search = () => {
                               key={type}
                               onClick={() => toggleType(type)}
                               className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${isSelected
-                                  ? 'bg-slate-800 text-white border-slate-800'
-                                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                ? 'bg-slate-800 text-white border-slate-800'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                                 }`}
                             >
                               {type}
