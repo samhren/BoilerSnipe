@@ -7,7 +7,7 @@ const StackedGradeBar = ({ data }) => {
   const total = validSegments.reduce((sum, d) => sum + d.value, 0);
 
   return (
-    <div className="w-full mb-2">
+    <div className="w-full mb-6">
       <div className="h-4 w-full flex rounded-md overflow-visible bg-slate-100">
         {validSegments.map((segment, index) => {
           const width = total > 0 ? (segment.value / total) * 100 : 0;
