@@ -17,6 +17,7 @@ import argparse
 import json
 from pathlib import Path
 from typing import Dict, List, Any, Optional
+import re
 
 import pandas as pd
 
@@ -82,13 +83,40 @@ def _normalize_grade_value(v: Any) -> Optional[float]:
 
 # CSV processing removed per request
 
+# Match header cells that indicate a percentage column under a grade label row
+PERCENT_HEADER_RE = re.compile(r"^(%|pct|percent(?:age)?)\s*of\s*total\b", re.IGNORECASE)
+
+# Match a composite header like "A % of Total" or "B- Percent of Total"
+COMPOSITE_GRADE_HEADER_RE = re.compile(
+    r"^(A\+|A-|A|B\+|B-|B|C\+|C-|C|D\+|D-|D|E|F|W|I|P|N|S|U|AU|PI|SI)\b.*",
+    re.IGNORECASE,
+)
+
 
 def find_header_row(df_raw: pd.DataFrame) -> Optional[int]:
-    max_scan = min(50, len(df_raw))
+    max_scan = min(80, len(df_raw))
     for idx in range(max_scan):
-        cell = str(df_raw.iloc[idx, 0]).strip().lower()
-        if cell == 'subject' or 'subject' in cell:
+        row_vals = [str(v).strip().lower() for v in list(df_raw.iloc[idx])]
+        if any(v == 'subject' or v.startswith('subject') for v in row_vals):
             return idx
+    return None
+
+
+def _normalize_grade_code(s: str) -> Optional[str]:
+    if not s:
+        return None
+    t = str(s).strip().upper().replace(" ", "")
+    # Normalize common variants like 'A +' -> 'A+'
+    t = t.replace("A+", "A+").replace("A-", "A-")
+    # Exact matches
+    if t in GRADE_FIELD_MAP:
+        return t
+    # Extract from composite header like 'A % of Total'
+    m = COMPOSITE_GRADE_HEADER_RE.match(t)
+    if m:
+        code = m.group(1).upper()
+        # Normalize spacing already removed; ensure valid
+        return code if code in GRADE_FIELD_MAP else None
     return None
 
 
@@ -103,15 +131,25 @@ def process_excel_sheet(df_raw: pd.DataFrame, sheet_name: str) -> List[Dict[str,
 
     headers = [str(h).strip() for h in list(df_raw.iloc[header_row])]
 
-    # Handle stacked headers ("% of Total" under letter grade row)
-    if '% of Total' in headers and header_row - 1 >= 0:
+    # Handle stacked headers (percent indicator under letter grade row)
+    # Be flexible: match '% of Total', 'Percent of Total', 'Pct of Total', etc.
+    if header_row - 1 >= 0:
         grade_row = list(df_raw.iloc[header_row - 1])
         new_headers = []
         for i, h in enumerate(headers):
-            if h == '% of Total' and i < len(grade_row) and pd.notna(grade_row[i]):
-                new_headers.append(str(grade_row[i]).strip())
+            h_str = str(h).strip()
+            if PERCENT_HEADER_RE.match(h_str):
+                # Try to pull the grade label from the same index, else look back 1-2 cols
+                grade_label = None
+                # Candidates: i, i-1, i-2
+                for j in (i, i - 1, i - 2):
+                    if 0 <= j < len(grade_row) and pd.notna(grade_row[j]):
+                        grade_label = str(grade_row[j]).strip()
+                        if grade_label:
+                            break
+                new_headers.append(grade_label or h_str)
             else:
-                new_headers.append(h)
+                new_headers.append(h_str)
         headers = new_headers
 
     df = df_raw.iloc[header_row + 1 :].copy()
@@ -125,6 +163,13 @@ def process_excel_sheet(df_raw: pd.DataFrame, sheet_name: str) -> List[Dict[str,
     # Remove clearly empty rows; be lenient about missing academic period/section
     if 'Subject' in df.columns:
         df = df[df['Subject'].notna()]
+
+    # Build a mapping of recognized grade columns from headers
+    grade_columns: Dict[str, str] = {}
+    for col in df.columns:
+        code = _normalize_grade_code(col)
+        if code and code not in grade_columns:
+            grade_columns[code] = col
 
     records: List[Dict[str, Any]] = []
     for _, row in df.iterrows():
@@ -143,13 +188,15 @@ def process_excel_sheet(df_raw: pd.DataFrame, sheet_name: str) -> List[Dict[str,
         if not rec['subject'] or not rec['course_number']:
             continue
 
-        # Attach grade percentages from columns that match letter names
+        # Attach grade percentages using detected grade columns
         for letter, fieldname in GRADE_FIELD_MAP.items():
-            if letter in df.columns:
-                value = row.get(letter)
-                val = _normalize_grade_value(value)
-                if val is not None:
-                    rec[fieldname] = val
+            colname = grade_columns.get(letter)
+            if colname is None:
+                continue
+            value = row.get(colname)
+            val = _normalize_grade_value(value)
+            if val is not None:
+                rec[fieldname] = val
 
         records.append(rec)
 
