@@ -23,7 +23,13 @@ const SORT_OPTIONS = [
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Initialize state from URL params
   const initialQuery = searchParams.get('q') || '';
+  const initialSort = searchParams.get('sort') || SORT_OPTIONS[0].value;
+  const initialDays = searchParams.get('days') ? new Set(searchParams.get('days').split(',')) : new Set();
+  const initialTypes = searchParams.get('types') ? new Set(searchParams.get('types').split(',')) : new Set();
+
   const [query, setQuery] = useState(initialQuery);
   const [courses, setCourses] = useState([]);
   const [trackedCRNs, setTrackedCRNs] = useState(new Set());
@@ -33,36 +39,38 @@ const Search = () => {
   const [searched, setSearched] = useState(false);
 
   // Filter & Sort States
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedDays, setSelectedDays] = useState(new Set());
-  const [selectedTypes, setSelectedTypes] = useState(new Set());
-  const [sortOption, setSortOption] = useState(SORT_OPTIONS[0].value);
+  const [showFilters, setShowFilters] = useState(initialDays.size > 0 || initialTypes.size > 0);
+  const [selectedDays, setSelectedDays] = useState(initialDays);
+  const [selectedTypes, setSelectedTypes] = useState(initialTypes);
+  const [sortOption, setSortOption] = useState(initialSort);
 
   useEffect(() => {
     loadTrackedCourses();
   }, []);
 
-  // Keep the URL's query param (?q=) in sync with the current input value
+  // Update URL params when state changes
   useEffect(() => {
-    const current = searchParams.get('q') || '';
-    if (query !== current) {
-      const params = new URLSearchParams(searchParams);
-      if (query && query.trim()) {
-        params.set('q', query);
-      } else {
-        params.delete('q');
-      }
+    const params = new URLSearchParams();
+
+    if (query.trim()) params.set('q', query.trim());
+
+    if (sortOption !== SORT_OPTIONS[0].value) {
+      params.set('sort', sortOption);
+    }
+
+    if (selectedDays.size > 0) {
+      params.set('days', Array.from(selectedDays).join(','));
+    }
+
+    if (selectedTypes.size > 0) {
+      params.set('types', Array.from(selectedTypes).join(','));
+    }
+
+    // Only update if the string representation is different to avoid unnecessary updates
+    if (params.toString() !== searchParams.toString()) {
       setSearchParams(params, { replace: true });
     }
-  }, [query]);
-
-  // Reset filters when a new search is performed
-  useEffect(() => {
-    if (searched) {
-      // Optional: Decisions to keep or reset filters can be made here. 
-      // Currently keeping them as user might refine search query but want same filters.
-    }
-  }, [courses]);
+  }, [query, sortOption, selectedDays, selectedTypes, setSearchParams, searchParams]);
 
   const loadTrackedCourses = async () => {
     try {
