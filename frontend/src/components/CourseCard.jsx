@@ -1,18 +1,44 @@
 import { useState } from 'react';
 import { gradesAPI } from '../services/api';
 
-const GradeBar = ({ label, percentage, color }) => {
-  const pct = percentage ? (percentage * 100).toFixed(1) : 0;
+const StackedGradeBar = ({ data }) => {
+  // Filter out zero values and normalize to 100% just in case, though raw averages are used
+  const validSegments = data.filter(d => d.value > 0);
+  const total = validSegments.reduce((sum, d) => sum + d.value, 0);
+
   return (
-    <div className="flex items-center gap-2">
-      <span className="w-6 text-xs font-medium text-slate-500">{label}</span>
-      <div className="flex-1 h-4 bg-slate-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full ${color} transition-all duration-300`}
-          style={{ width: `${pct}%` }}
-        />
+    <div className="w-full">
+      <div className="h-6 w-full flex rounded-md overflow-hidden bg-slate-100">
+        {validSegments.map((segment, index) => {
+          const width = total > 0 ? (segment.value / total) * 100 : 0;
+          return (
+            <div
+              key={index}
+              className={`${segment.color} h-full relative group first:rounded-l-md last:rounded-r-md transition-all duration-300 hover:brightness-110`}
+              style={{ width: `${width}%` }}
+              title={`${segment.label}: ${(segment.value * 100).toFixed(1)}%`}
+            >
+              {/* Tooltip on hover */}
+              <div className="opacity-0 group-hover:opacity-100 absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap pointer-events-none z-10 transition-opacity">
+                {segment.label}: {(segment.value * 100).toFixed(1)}%
+                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-800"></div>
+              </div>
+            </div>
+          );
+        })}
       </div>
-      <span className="w-12 text-xs text-slate-600 text-right">{pct}%</span>
+      {/* Legend for significant chunks */}
+      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 justify-between">
+        {validSegments.map((segment, index) => {
+          if (segment.value < 0.05) return null; // Skip tiny segments in legend
+          return (
+            <div key={index} className="flex items-center gap-1.5 text-xs text-slate-600">
+              <div className={`w-2 h-2 rounded-full ${segment.color}`} />
+              <span>{segment.label} <span className="text-slate-400">{(segment.value * 100).toFixed(0)}%</span></span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -110,31 +136,29 @@ const GradeSection = ({ courseCode, instructor }) => {
                   <p className="text-xs text-slate-500 mb-2">
                     {instructor?.split(',')[0]} ({instructorRecords.length} {instructorRecords.length === 1 ? 'section' : 'sections'})
                   </p>
-                  <div className="space-y-1.5">
+                  <div>
                     {(() => {
-                      const avgA = instructorRecords.reduce((sum, r) =>
-                        sum + (r.grade_a_plus || 0) + (r.grade_a || 0) + (r.grade_a_minus || 0), 0) / instructorRecords.length;
-                      const avgB = instructorRecords.reduce((sum, r) =>
-                        sum + (r.grade_b_plus || 0) + (r.grade_b || 0) + (r.grade_b_minus || 0), 0) / instructorRecords.length;
-                      const avgC = instructorRecords.reduce((sum, r) =>
-                        sum + (r.grade_c_plus || 0) + (r.grade_c || 0) + (r.grade_c_minus || 0), 0) / instructorRecords.length;
-                      const avgD = instructorRecords.reduce((sum, r) =>
-                        sum + (r.grade_d_plus || 0) + (r.grade_d || 0) + (r.grade_d_minus || 0), 0) / instructorRecords.length;
-                      const avgF = instructorRecords.reduce((sum, r) =>
-                        sum + (r.grade_e || 0) + (r.grade_f || 0), 0) / instructorRecords.length;
-                      const avgW = instructorRecords.reduce((sum, r) =>
-                        sum + (r.grade_w || 0), 0) / instructorRecords.length;
+                      const calculateAvg = (key) =>
+                        instructorRecords.reduce((sum, r) => sum + (r[key] || 0), 0) / instructorRecords.length;
 
-                      return (
-                        <>
-                          <GradeBar label="A" percentage={avgA} color="bg-emerald-500" />
-                          <GradeBar label="B" percentage={avgB} color="bg-lime-500" />
-                          <GradeBar label="C" percentage={avgC} color="bg-amber-500" />
-                          <GradeBar label="D" percentage={avgD} color="bg-orange-500" />
-                          <GradeBar label="F" percentage={avgF} color="bg-red-500" />
-                          {avgW > 0.01 && <GradeBar label="W" percentage={avgW} color="bg-slate-400" />}
-                        </>
-                      );
+                      const data = [
+                        { label: 'A+', value: calculateAvg('grade_a_plus'), color: 'bg-emerald-600' },
+                        { label: 'A', value: calculateAvg('grade_a'), color: 'bg-emerald-500' },
+                        { label: 'A-', value: calculateAvg('grade_a_minus'), color: 'bg-emerald-400' },
+                        { label: 'B+', value: calculateAvg('grade_b_plus'), color: 'bg-lime-500' },
+                        { label: 'B', value: calculateAvg('grade_b'), color: 'bg-lime-400' },
+                        { label: 'B-', value: calculateAvg('grade_b_minus'), color: 'bg-lime-300' },
+                        { label: 'C+', value: calculateAvg('grade_c_plus'), color: 'bg-yellow-500' },
+                        { label: 'C', value: calculateAvg('grade_c'), color: 'bg-yellow-400' },
+                        { label: 'C-', value: calculateAvg('grade_c_minus'), color: 'bg-yellow-300' },
+                        { label: 'D+', value: calculateAvg('grade_d_plus'), color: 'bg-orange-500' },
+                        { label: 'D', value: calculateAvg('grade_d'), color: 'bg-orange-400' },
+                        { label: 'D-', value: calculateAvg('grade_d_minus'), color: 'bg-orange-300' },
+                        { label: 'F', value: calculateAvg('grade_f') + calculateAvg('grade_e'), color: 'bg-red-500' },
+                        { label: 'W', value: calculateAvg('grade_w'), color: 'bg-slate-400' },
+                      ];
+
+                      return <StackedGradeBar data={data} />;
                     })()}
                   </div>
                 </div>
