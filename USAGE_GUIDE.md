@@ -58,7 +58,7 @@ python -m workers.inventory_scraper -v
 
 **What it scrapes:**
 - Subjects: MA, CS, ECON, STAT, PHYS, CHEM, BIOL, ENGR, MGMT, ECE, ME, IE, AAE, ABE, CHE, CE, MSE, NE
-- Term: Spring 2026 (202620)
+- Term: Fall 2026 (202710)
 - You can edit the subjects list in `workers/inventory_scraper.py` lines 335-346
 
 ### Seat Sniper (Phase 2)
@@ -155,14 +155,11 @@ SNIPER_INTERVAL_MINUTES=3
 
 ### Change Term to Scrape
 
-Edit `backend/workers/inventory_scraper.py` line 349-352:
+Edit `backend/.env`:
 
-```python
-total = scraper.scrape_term_subjects(
-    term_code="202630",        # Change this
-    term_name="Summer 2026",    # And this
-    subjects=subjects_to_scrape
-)
+```env
+CURRENT_TERM_CODE=202710
+CURRENT_TERM_NAME=Fall 2026
 ```
 
 ### Add/Remove Subjects
@@ -230,7 +227,7 @@ rm purdue_courses.db
 
 - **Total Courses**: 507
 - **Subjects**: MA (Mathematics)
-- **Term**: Spring 2026 (202620)
+- **Term**: Fall 2026 (202710)
 
 **Sample Courses Available:**
 - MA 13700: Mathematics For Elementary Teachers I

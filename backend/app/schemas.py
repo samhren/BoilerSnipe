@@ -74,6 +74,7 @@ class CourseSearch(BaseModel):
 # Track Schemas
 class TrackCreate(BaseModel):
     crn: str  # User provides CRN to track
+    term_code: str
     notify_on_open: bool = True
     notify_on_close: bool = False
 

@@ -261,6 +261,10 @@ const CourseCard = ({ course, onTrack, isTracking, isTracked }) => {
 
         <div className="space-y-1.5 text-sm mb-4">
           <div className="flex">
+            <span className="text-slate-400 w-20">Term</span>
+            <span className="text-slate-700">{course.term_name || course.term_code}</span>
+          </div>
+          <div className="flex">
             <span className="text-slate-400 w-20">CRN</span>
             <span className="text-slate-700 font-mono">{course.crn}</span>
           </div>
@@ -286,7 +290,7 @@ const CourseCard = ({ course, onTrack, isTracking, isTracked }) => {
         )}
 
         <button
-          onClick={() => onTrack(course.crn)}
+          onClick={() => onTrack(course)}
           disabled={isTracking || isTracked}
           className={`w-full py-2.5 rounded-lg font-medium text-sm transition-colors mt-3 ${isTracked
             ? 'bg-slate-100 text-slate-400 cursor-not-allowed'

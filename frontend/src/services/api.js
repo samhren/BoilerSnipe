@@ -54,7 +54,9 @@ export const coursesAPI = {
     if (termCode) params.term_code = termCode;
     return api.get('/api/courses', { params });
   },
-  getBycrn: (crn) => api.get(`/api/courses/${crn}`),
+  getBycrn: (crn, termCode) => api.get(`/api/courses/${crn}`, {
+    params: termCode ? { term_code: termCode } : {},
+  }),
 };
 
 // Tracks API

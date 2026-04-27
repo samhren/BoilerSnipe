@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Float, Index
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean, Float, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -34,16 +34,17 @@ class Course(Base):
     __tablename__ = "courses"
 
     id = Column(Integer, primary_key=True, index=True)
-    crn = Column(String, unique=True, index=True, nullable=False)  # Course Reference Number
+    crn = Column(String, index=True, nullable=False)  # Course Reference Number
     course_code = Column(String, index=True, nullable=False)  # e.g., "MA 35100"
     title = Column(String, nullable=False)  # e.g., "Elementary Linear Algebra"
     instructor = Column(String)
     time = Column(String)  # e.g., "10:30 am - 11:20 am"
     days = Column(String)  # e.g., "TR"
     schedule_type = Column(String)  # e.g., "Lecture", "Laboratory", "Recitation"
-    term_code = Column(String, nullable=False)  # e.g., "202620"
-    term_name = Column(String)  # e.g., "Spring 2026"
+    term_code = Column(String, index=True, nullable=False)  # e.g., "202710"
+    term_name = Column(String)  # e.g., "Fall 2026"
     section = Column(String)  # e.g., "003" or "L15"
+    is_listed = Column(Boolean, default=True, nullable=False)
 
     # Seat information (updated by sniper)
     seats_available = Column(Integer, default=0)
@@ -57,6 +58,11 @@ class Course(Base):
 
     # Relationships
     tracks = relationship("Track", back_populates="course", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        UniqueConstraint("term_code", "crn", name="uq_courses_term_crn"),
+        Index("ix_courses_term_listed_code", "term_code", "is_listed", "course_code"),
+    )
 
 
 class Track(Base):

@@ -62,7 +62,7 @@ const Search = () => {
   const loadTrackedCourses = async () => {
     try {
       const response = await tracksAPI.getAll();
-      const crns = new Set(response.data.map(t => t.course.crn));
+      const crns = new Set(response.data.map(t => `${t.course.term_code}:${t.course.crn}`));
       setTrackedCRNs(crns);
     } catch (err) {
       console.error('Failed to load tracked courses:', err);
@@ -108,13 +108,19 @@ const Search = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleTrack = async (crn) => {
+  const handleTrack = async (course) => {
     try {
-      setTracking(crn);
-      await tracksAPI.create({ crn, notify_on_open: true, notify_on_close: false });
-      setTrackedCRNs(new Set([...trackedCRNs, crn]));
-      console.log('Tracked Course:', { crn });
-      rybbit.track('Track Course', { crn });
+      const trackKey = `${course.term_code}:${course.crn}`;
+      setTracking(trackKey);
+      await tracksAPI.create({
+        crn: course.crn,
+        term_code: course.term_code,
+        notify_on_open: true,
+        notify_on_close: false
+      });
+      setTrackedCRNs(new Set([...trackedCRNs, trackKey]));
+      console.log('Tracked Course:', { crn: course.crn, term_code: course.term_code });
+      rybbit.track('Track Course', { crn: course.crn, term_code: course.term_code });
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to track course');
       console.error(err);
@@ -327,11 +333,11 @@ const Search = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredCourses.map(course => (
               <CourseCard
-                key={course.id}
+                key={`${course.term_code}:${course.crn}`}
                 course={course}
                 onTrack={handleTrack}
-                isTracking={tracking === course.crn}
-                isTracked={trackedCRNs.has(course.crn)}
+                isTracking={tracking === `${course.term_code}:${course.crn}`}
+                isTracked={trackedCRNs.has(`${course.term_code}:${course.crn}`)}
               />
             ))}
           </div>

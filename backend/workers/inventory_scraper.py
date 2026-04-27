@@ -32,6 +32,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from app.database import SessionLocal
 from app.models import Course
+from app.config import settings
 
 
 class InventoryScraper:
@@ -165,8 +166,8 @@ class InventoryScraper:
         Scrape courses for a specific term and subjects.
 
         Args:
-            term_code: Term code (e.g., "202620")
-            term_name: Term name (e.g., "Spring 2026")
+            term_code: Term code (e.g., "202710")
+            term_name: Term name (e.g., "Fall 2026")
             subjects: List of subject codes (e.g., ["MA", "CS"])
             course_numbers: Optional list of specific course numbers (e.g., ["35100"])
 
@@ -245,6 +246,7 @@ class InventoryScraper:
 
                 # Save to database
                 self._save_courses(courses)
+                self._sync_subject_courses(term_code, subject, courses)
 
                 print(f"  - Found {len(courses)} course sections")
 
@@ -347,6 +349,7 @@ class InventoryScraper:
             try:
                 # Check if course exists
                 existing_course = self.db.query(Course).filter(
+                    Course.term_code == course_data['term_code'],
                     Course.crn == course_data['crn']
                 ).first()
 
@@ -354,9 +357,10 @@ class InventoryScraper:
                     # Update existing course
                     for key, value in course_data.items():
                         setattr(existing_course, key, value)
+                    existing_course.is_listed = True
                 else:
                     # Create new course
-                    new_course = Course(**course_data)
+                    new_course = Course(**course_data, is_listed=True)
                     self.db.add(new_course)
 
                 self.db.commit()
@@ -364,6 +368,23 @@ class InventoryScraper:
             except Exception as e:
                 print(f"    - Error saving course {course_data.get('crn')}: {str(e)}")
                 self.db.rollback()
+
+    def _sync_subject_courses(self, term_code: str, subject: str, courses: List[Dict]):
+        """Mark stale subject rows as unlisted after a successful subject scrape."""
+        try:
+            seen_crns = {course["crn"] for course in courses}
+            existing_courses = self.db.query(Course).filter(
+                Course.term_code == term_code,
+                Course.course_code.like(f"{subject} %")
+            ).all()
+
+            for course in existing_courses:
+                course.is_listed = course.crn in seen_crns
+
+            self.db.commit()
+        except Exception as e:
+            print(f"    - Error syncing {subject} listings: {str(e)}")
+            self.db.rollback()
 
     def close(self):
         """Clean up resources"""
@@ -383,8 +404,8 @@ class InventoryScraper:
 
 
 def run_inventory_scraper(
-    term_code: str = "202620",
-    term_name: str = "Spring 2026",
+    term_code: str = settings.CURRENT_TERM_CODE,
+    term_name: str = settings.CURRENT_TERM_NAME,
     subjects: List[str] = None,
     headless: bool = True
 ):
@@ -392,18 +413,13 @@ def run_inventory_scraper(
     Main function to run the inventory scraper.
 
     Args:
-        term_code: Term code (e.g., "202620")
-        term_name: Term name (e.g., "Spring 2026")
+        term_code: Term code (e.g., "202710")
+        term_name: Term name (e.g., "Fall 2026")
         subjects: List of subjects to scrape (e.g., ["MA", "CS", "ECON"])
         headless: Run browser in headless mode (default: True)
     """
     if subjects is None:
-        # Default subjects - comprehensive list of popular departments
-        subjects = [
-            "MA", "CS", "ECON", "STAT", "PHYS", "CHEM",
-            "BIOL", "ENGR", "MGMT", "ECE", "ME", "IE",
-            "AAE", "ABE", "CHE", "CE", "MSE", "NE"
-        ]
+        subjects = settings.inventory_subject_list
 
     print(f"Starting Inventory Scraper for {term_name} ({term_code})")
     print(f"Mode: {'Headless' if headless else 'Visible Browser'}")
@@ -440,24 +456,12 @@ if __name__ == "__main__":
         print("Starting scraper in HEADLESS mode (production)...")
         headless = True
 
-    # Default subjects to scrape - add/remove as needed
-    subjects_to_scrape = [
-        "MA",      # Mathematics
-        "CS",      # Computer Science
-        "ECON",    # Economics
-        "STAT",    # Statistics
-        "PHYS",    # Physics
-        "CHEM",    # Chemistry
-        "BIOL",    # Biology
-        "ENGR",    # Engineering
-        "MGMT",    # Management
-        "ECE",     # Electrical & Computer Engineering
-    ]
+    subjects_to_scrape = settings.inventory_subject_list
 
     with InventoryScraper(headless=headless) as scraper:
         total = scraper.scrape_term_subjects(
-            term_code="202620",
-            term_name="Spring 2026",
+            term_code=settings.CURRENT_TERM_CODE,
+            term_name=settings.CURRENT_TERM_NAME,
             subjects=subjects_to_scrape
         )
         print(f"\n{'='*60}")

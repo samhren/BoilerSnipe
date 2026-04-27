@@ -249,20 +249,20 @@ class SeatSniper:
             print("No active tracks found.")
             return
 
-        # Group tracks by CRN to avoid duplicate checks
+        # Group tracks by term-scoped CRN to avoid duplicate checks across semesters
         crn_tracks = {}
         for track in active_tracks:
-            crn = track.course.crn
-            if crn not in crn_tracks:
-                crn_tracks[crn] = []
-            crn_tracks[crn].append(track)
+            course_key = (track.course.term_code, track.course.crn)
+            if course_key not in crn_tracks:
+                crn_tracks[course_key] = []
+            crn_tracks[course_key].append(track)
 
         print(f"Checking {len(crn_tracks)} unique courses for {len(active_tracks)} total tracks...")
 
         checked = 0
         notifications_sent = 0
 
-        for crn, tracks in crn_tracks.items():
+        for (_, crn), tracks in crn_tracks.items():
             course = tracks[0].course  # All tracks share the same course
             old_seats = course.seats_remaining
 

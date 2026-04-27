@@ -118,6 +118,9 @@ This project is optimized for deployment on [Railway](https://railway.app/).
 | `GOOGLE_CLIENT_ID` | OAuth Client ID for backend validation | Yes |
 | `SNIPER_INTERVAL_MINUTES` | Frequency of seat checks (default: 5) | No |
 | `INVENTORY_CRON` | Cron schedule for full course scrape (default: `0 2 * * *`) | No |
+| `CURRENT_TERM_CODE` | Default Purdue term code to scrape and search | No |
+| `CURRENT_TERM_NAME` | Display name for the default term | No |
+| `INVENTORY_SUBJECTS` | Comma-separated subject list for inventory scraping | No |
 
 ### Frontend (`frontend/.env`)
 

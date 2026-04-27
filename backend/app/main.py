@@ -14,6 +14,7 @@ from .database import get_db, init_db
 from . import models, schemas, auth
 from .config import settings
 from workers.notifier import send_welcome_email
+from .migrate import migrate
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -62,6 +63,7 @@ async def startup_event():
     print(f"DEBUG: FRONTEND_URL={settings.FRONTEND_URL}")
     print(f"DEBUG: CORS Origins={origins}")
     init_db()
+    migrate()
 
 
 # Authentication Endpoints
@@ -180,11 +182,11 @@ def get_current_user_info(current_user: models.User = Depends(auth.get_current_u
 def search_courses(
     request: Request,
     query: str = "",
-    term_code: str = None,
+    term_code: str = settings.CURRENT_TERM_CODE,
     db: Session = Depends(get_db)
 ):
     """Search courses in the database"""
-    courses_query = db.query(models.Course)
+    courses_query = db.query(models.Course).filter(models.Course.is_listed == True)
 
     if term_code:
         courses_query = courses_query.filter(models.Course.term_code == term_code)
@@ -232,9 +234,17 @@ def search_courses(
 
 
 @app.get("/api/courses/{crn}", response_model=schemas.CourseResponse)
-def get_course_by_crn(crn: str, db: Session = Depends(get_db)):
+def get_course_by_crn(
+    crn: str,
+    term_code: str = settings.CURRENT_TERM_CODE,
+    db: Session = Depends(get_db)
+):
     """Get a specific course by CRN"""
-    course = db.query(models.Course).filter(models.Course.crn == crn).first()
+    course = db.query(models.Course).filter(
+        models.Course.crn == crn,
+        models.Course.term_code == term_code,
+        models.Course.is_listed == True
+    ).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
 
@@ -359,9 +369,13 @@ def create_track(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Track a course by CRN"""
+    """Track a course by term-scoped CRN"""
     # Find the course
-    course = db.query(models.Course).filter(models.Course.crn == track_data.crn).first()
+    course = db.query(models.Course).filter(
+        models.Course.crn == track_data.crn,
+        models.Course.term_code == track_data.term_code,
+        models.Course.is_listed == True
+    ).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found. Course may need to be added to inventory first.")
 

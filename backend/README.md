@@ -73,8 +73,8 @@ python -m workers.notifier +15551234567
 - `GET /api/auth/me` - Get current user info
 
 ### Courses
-- `GET /api/courses` - Search courses (query params: `query`, `term_code`)
-- `GET /api/courses/{crn}` - Get course details by CRN
+- `GET /api/courses` - Search courses (query params: `query`, `term_code`; defaults to current term)
+- `GET /api/courses/{crn}` - Get course details by CRN for a term (`term_code` query param)
 
 ### Tracking
 - `POST /api/tracks` - Start tracking a course
@@ -90,7 +90,7 @@ python -m workers.notifier +15551234567
 - **Purpose**: Scrapes Purdue's course schedule to build/update course inventory
 - **Target**: https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched
 - **Process**:
-  1. Select term (e.g., Spring 2026)
+  1. Select term (e.g., Fall 2026)
   2. Select subject (e.g., MA, CS, ECON)
   3. Parse course sections
   4. Extract CRN, course code, instructor, time, days
@@ -116,7 +116,7 @@ python -m workers.notifier +15551234567
 - id, email, phone_number, hashed_password, is_active, created_at
 
 ### Courses
-- id, crn, course_code, title, instructor, time, days, term_code, term_name
+- id, crn, course_code, title, instructor, time, days, term_code, term_name, section, is_listed
 - seats_available, seats_capacity, seats_remaining
 - last_checked, created_at, updated_at
 
@@ -141,6 +141,8 @@ Edit `.env` to configure:
 - **PROXY_URL**: Optional proxy for rotating IPs
 - **INVENTORY_CRON**: Cron expression for inventory scraper schedule
 - **SNIPER_INTERVAL_MINUTES**: Minutes between seat checks
+- **CURRENT_TERM_CODE** / **CURRENT_TERM_NAME**: Default term the app scrapes and searches
+- **INVENTORY_SUBJECTS**: Comma-separated subject list for the inventory scraper
 
 ## Development
 
