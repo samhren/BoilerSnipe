@@ -13,15 +13,10 @@ from datetime import datetime
 sys.path.append(str(Path(__file__).parent.parent))
 
 from app.config import settings
-from app.database import SessionLocal, init_db
+from app.database import init_db
 from app.migrate import migrate
-from app import models
 from .inventory_scraper import run_inventory_scraper
 from .sniper import run_sniper
-
-
-def _startup_inventory_marker_key() -> str:
-    return f"startup_inventory_completed:v2:{settings.CURRENT_TERM_CODE}"
 
 
 def job_inventory_scraper():
@@ -54,20 +49,10 @@ def job_seat_sniper():
 
 
 def run_startup_scrape_once():
-    """Run the current-term inventory scrape once, then persist a completion marker."""
+    """Run one current-term inventory scrape during this worker startup."""
     if not settings.RUN_STARTUP_INVENTORY_ONCE:
         print("[STARTUP] One-time inventory scrape disabled.", flush=True)
         return
-
-    marker_key = _startup_inventory_marker_key()
-    db = SessionLocal()
-    try:
-        existing_marker = db.query(models.AppState).filter(models.AppState.key == marker_key).first()
-        if existing_marker:
-            print(f"[STARTUP] Inventory already scraped for {settings.CURRENT_TERM_NAME}; skipping.", flush=True)
-            return
-    finally:
-        db.close()
 
     print("\n[STARTUP] Preparing for initial update scrape...", flush=True)
     try:
@@ -77,15 +62,7 @@ def run_startup_scrape_once():
             print("[STARTUP] Inventory scrape returned no courses; will retry on next worker start.", flush=True)
             return
 
-        db = SessionLocal()
-        try:
-            marker = models.AppState(key=marker_key, value=str(scraped_count))
-            db.merge(marker)
-            db.commit()
-        finally:
-            db.close()
-
-        print("[STARTUP] Initial update completed successfully.", flush=True)
+        print(f"[STARTUP] Initial update completed successfully. Scraped {scraped_count} course sections.", flush=True)
     except Exception as e:
         print(f"Warning: Startup scrape failed: {e}", flush=True)
 
@@ -119,7 +96,7 @@ def start_scheduler():
     print("BOILERSNIPE - BACKGROUND SCHEDULER")
     print("="*60)
     print(f"\nScheduled Jobs:")
-    print(f"  1. One-time Inventory Scraper: {'Enabled' if settings.RUN_STARTUP_INVENTORY_ONCE else 'Disabled'}")
+    print(f"  1. Startup Inventory Scraper: {'Enabled' if settings.RUN_STARTUP_INVENTORY_ONCE else 'Disabled'}")
     print(f"  2. Recurring Inventory Scraper: {settings.INVENTORY_CRON if settings.ENABLE_RECURRING_INVENTORY else 'Disabled'}")
     print(f"  3. Seat Sniper: Every {settings.SNIPER_INTERVAL_MINUTES} minutes")
     print(f"\nScheduler started at {datetime.now()}")

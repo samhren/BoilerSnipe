@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     PROXY_URL: Optional[str] = None
 
     # Scraper settings
-    INVENTORY_CRON: str = "0 2 * * *"  # Daily at 2 AM
+    INVENTORY_CRON: str = "0 2 * * 0"  # Weekly on Sunday at 2 AM
     SNIPER_INTERVAL_MINUTES: float = 5
     CURRENT_TERM_CODE: str = "202710"
     CURRENT_TERM_NAME: str = "Fall 2026"

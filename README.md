@@ -117,11 +117,11 @@ This project is optimized for deployment on [Railway](https://railway.app/).
 | `RESEND_API_KEY` | API Key for sending emails | Yes |
 | `GOOGLE_CLIENT_ID` | OAuth Client ID for backend validation | Yes |
 | `SNIPER_INTERVAL_MINUTES` | Frequency of seat checks (default: 5) | No |
-| `INVENTORY_CRON` | Cron schedule for full course scrape (default: `0 2 * * *`) | No |
+| `INVENTORY_CRON` | Cron schedule for full course scrape (default: `0 2 * * 0`, weekly Sunday at 2 AM) | No |
 | `CURRENT_TERM_CODE` | Default Purdue term code to scrape and search | No |
 | `CURRENT_TERM_NAME` | Display name for the default term | No |
 | `INVENTORY_SUBJECTS` | Comma-separated subject list for inventory scraping | No |
-| `RUN_STARTUP_INVENTORY_ONCE` | Run current-term inventory once when worker starts (default: `true`) | No |
+| `RUN_STARTUP_INVENTORY_ONCE` | Run current-term inventory once on each worker start (default: `true`) | No |
 | `ENABLE_RECURRING_INVENTORY` | Keep inventory on cron after startup scrape (default: `false`) | No |
 
 ### Frontend (`frontend/.env`)

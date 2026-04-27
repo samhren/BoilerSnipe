@@ -80,7 +80,7 @@ python -m workers.scheduler
 ```
 
 This runs:
-- **Inventory Scraper**: Daily at 2 AM
+- **Inventory Scraper**: Weekly on Sunday at 2 AM
 - **Seat Sniper**: Every 5 minutes
 
 ---
@@ -146,8 +146,8 @@ python -m workers.notifier +15551234567
 Edit `backend/.env`:
 
 ```env
-# Daily at 3 AM instead of 2 AM
-INVENTORY_CRON=0 3 * * *
+# Weekly on Sunday at 2 AM
+INVENTORY_CRON=0 2 * * 0
 
 # Check every 3 minutes instead of 5
 SNIPER_INTERVAL_MINUTES=3

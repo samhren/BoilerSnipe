@@ -45,7 +45,7 @@ python -m workers.scheduler
 ```
 
 This runs:
-- **Inventory Scraper**: Daily at 2 AM (configurable)
+- **Inventory Scraper**: Weekly on Sunday at 2 AM (configurable)
 - **Seat Sniper**: Every 5 minutes (configurable)
 
 ### 3. Manual Worker Execution
@@ -86,7 +86,7 @@ python -m workers.notifier +15551234567
 
 ### Phase 1: Inventory Collector
 - **Tool**: Selenium WebDriver
-- **Schedule**: Daily (default: 2 AM)
+- **Schedule**: Weekly on Sunday (default: 2 AM)
 - **Purpose**: Scrapes Purdue's course schedule to build/update course inventory
 - **Target**: https://selfservice.mypurdue.purdue.edu/prod/bwckschd.p_disp_dyn_sched
 - **Process**:
@@ -143,7 +143,7 @@ Edit `.env` to configure:
 - **SNIPER_INTERVAL_MINUTES**: Minutes between seat checks
 - **CURRENT_TERM_CODE** / **CURRENT_TERM_NAME**: Default term the app scrapes and searches
 - **INVENTORY_SUBJECTS**: Comma-separated subject list for the inventory scraper
-- **RUN_STARTUP_INVENTORY_ONCE**: Run current-term inventory once when the worker starts
+- **RUN_STARTUP_INVENTORY_ONCE**: Run current-term inventory once on each worker start
 - **ENABLE_RECURRING_INVENTORY**: Keep inventory scraping on cron after the startup scrape
 
 ## Development

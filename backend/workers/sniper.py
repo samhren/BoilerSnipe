@@ -78,8 +78,9 @@ class SeatSniper:
         Parse seat information from the course detail page.
 
         The page has a table with header "Registration Availability"
-        with columns: Capacity | Actual | Remaining
-        and a row starting with "Seats" containing the values.
+        with columns: Capacity | Actual | Remaining. Cross-listed courses can
+        also include a "Cross List Seats" row, which is the aggregate cap across
+        linked CRNs. The effective availability is the most restrictive row.
         """
         try:
             # Find all tables
@@ -91,20 +92,40 @@ class SeatSniper:
                 if caption and 'Registration Availability' in caption.get_text():
                     # Found the right table, now parse the seat row
                     rows = table.find_all('tr')
+                    seats_data = None
+                    cross_list_data = None
 
                     for row in rows:
-                        # Look for the "Seats" row (not "Waitlist Seats")
                         th = row.find('th')
-                        if th and th.get_text().strip() == 'Seats':
-                            # Get all td cells in this row
-                            cells = row.find_all('td')
-                            if len(cells) >= 3:
-                                remaining = int(cells[2].get_text().strip())
-                                return {
-                                    'seats_capacity': int(cells[0].get_text().strip()),
-                                    'seats_available': int(cells[1].get_text().strip()),
-                                    'seats_remaining': max(0, remaining),
-                                }
+                        if not th:
+                            continue
+
+                        label = " ".join(th.get_text().split())
+                        if label not in ('Seats', 'Cross List Seats'):
+                            continue
+
+                        cells = row.find_all('td')
+                        if len(cells) < 3:
+                            continue
+
+                        row_data = {
+                            'seats_capacity': int(cells[0].get_text().strip()),
+                            'seats_available': int(cells[1].get_text().strip()),
+                            'seats_remaining': max(0, int(cells[2].get_text().strip())),
+                        }
+
+                        if label == 'Seats':
+                            seats_data = row_data
+                        elif label == 'Cross List Seats':
+                            cross_list_data = row_data
+
+                    if seats_data and cross_list_data:
+                        if cross_list_data['seats_remaining'] < seats_data['seats_remaining']:
+                            return cross_list_data
+                        return seats_data
+
+                    if seats_data:
+                        return seats_data
 
         except Exception as e:
             print(f"Error parsing seat info: {str(e)}")
