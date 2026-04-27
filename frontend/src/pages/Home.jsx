@@ -19,6 +19,10 @@ const Home = () => {
             <p className="text-lg sm:text-xl text-slate-300 mb-8">
               Get notified instantly when seats open up in your Purdue courses
             </p>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-400/10 px-4 py-2 text-sm font-medium text-amber-200 mb-8">
+              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              Updated for Fall 2026 courses
+            </div>
 
             {user ? (
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
