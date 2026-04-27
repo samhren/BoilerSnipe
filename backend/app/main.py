@@ -195,29 +195,35 @@ def search_courses(
         import re
         # Normalize: remove extra spaces
         clean_query = " ".join(query.strip().split())
+        subject_match = re.fullmatch(r'[a-zA-Z]{2,6}', clean_query)
         
-        conditions = []
-        
-        # 1. CRN Match
-        conditions.append(models.Course.crn.ilike(f"%{clean_query}%"))
-        
-        # 2. Smart Course Code Match (handles "CS180", "cs 180" -> matches "CS 18000")
-        code_match = re.match(r'^([a-zA-Z]+)[\s-]*(\d+)$', clean_query)
-        if code_match:
-            subj, num = code_match.groups()
-            conditions.append(models.Course.course_code.ilike(f"{subj}%{num}%"))
+        if subject_match:
+            # Exact subject-prefix searches like "CS" should not return courses
+            # whose title merely contains those letters.
+            courses_query = courses_query.filter(models.Course.course_code.ilike(f"{clean_query} %"))
+        else:
+            conditions = []
             
-        # 3. Token-based matching (AND logic for terms)
-        terms = clean_query.split()
-        if terms:
-            # Title: All terms must match
-            conditions.append(and_(*[models.Course.title.ilike(f"%{term}%") for term in terms]))
-            # Course Code: All terms must match (e.g. "CS 180")
-            conditions.append(and_(*[models.Course.course_code.ilike(f"%{term}%") for term in terms]))
+            # 1. CRN Match
+            conditions.append(models.Course.crn.ilike(f"%{clean_query}%"))
             
-        courses_query = courses_query.filter(or_(*conditions))
-
-    courses = courses_query.order_by(models.Course.course_code).limit(50).all()
+            # 2. Smart Course Code Match (handles "CS180", "cs 180" -> matches "CS 18000")
+            code_match = re.match(r'^([a-zA-Z]+)[\s-]*(\d+)$', clean_query)
+            if code_match:
+                subj, num = code_match.groups()
+                conditions.append(models.Course.course_code.ilike(f"{subj}%{num}%"))
+                
+            # 3. Token-based matching (AND logic for terms)
+            terms = clean_query.split()
+            if terms:
+                # Title: All terms must match
+                conditions.append(and_(*[models.Course.title.ilike(f"%{term}%") for term in terms]))
+                # Course Code: All terms must match (e.g. "CS 180")
+                conditions.append(and_(*[models.Course.course_code.ilike(f"%{term}%") for term in terms]))
+                
+            courses_query = courses_query.filter(or_(*conditions))
+            
+    courses = courses_query.order_by(models.Course.course_code, models.Course.section, models.Course.crn).limit(50).all()
 
     # Process courses to hide seat data for untracked courses
     for course in courses:
