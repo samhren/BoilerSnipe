@@ -380,9 +380,11 @@ def create_track(
         raise HTTPException(status_code=404, detail="Course not found. Course may need to be added to inventory first.")
 
     # Check track limit
-    track_count = db.query(models.Track).filter(
+    track_count = db.query(models.Track).join(models.Course).filter(
         models.Track.user_id == current_user.id,
-        models.Track.is_active == True
+        models.Track.is_active == True,
+        models.Course.term_code == settings.CURRENT_TERM_CODE,
+        models.Course.is_listed == True
     ).count()
 
     if track_count >= 10:
@@ -462,10 +464,12 @@ def get_my_tracks(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all tracks for current user"""
-    tracks = db.query(models.Track).filter(
+    """Get active tracks for current-term listed courses."""
+    tracks = db.query(models.Track).join(models.Course).filter(
         models.Track.user_id == current_user.id,
-        models.Track.is_active == True
+        models.Track.is_active == True,
+        models.Course.term_code == settings.CURRENT_TERM_CODE,
+        models.Course.is_listed == True
     ).all()
     return tracks
 

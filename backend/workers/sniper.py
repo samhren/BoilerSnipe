@@ -240,9 +240,12 @@ class SeatSniper:
         print(f"Starting Seat Sniper check cycle at {datetime.now()}")
         print("-" * 60)
 
-        # Get all active tracks with their courses
-        active_tracks = self.db.query(Track).filter(
-            Track.is_active == True
+        # Only check active tracks for the current listed term. Old-term tracks
+        # stay in the database but do not consume worker cycles.
+        active_tracks = self.db.query(Track).join(Course).filter(
+            Track.is_active == True,
+            Course.term_code == settings.CURRENT_TERM_CODE,
+            Course.is_listed == True
         ).all()
 
         if not active_tracks:
