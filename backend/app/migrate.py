@@ -175,9 +175,12 @@ def _migrate_postgres() -> None:
             logger.info("Adding missing column 'is_listed' to 'courses' table...")
             connection.execute(text("ALTER TABLE courses ADD COLUMN is_listed BOOLEAN NOT NULL DEFAULT TRUE"))
 
+        connection.execute(text("DROP INDEX IF EXISTS ix_courses_crn"))
         connection.execute(text("DROP INDEX IF EXISTS uq_courses_term_crn"))
         connection.execute(text("DROP INDEX IF EXISTS ix_courses_term_listed_code"))
         connection.execute(text("ALTER TABLE courses DROP CONSTRAINT IF EXISTS courses_crn_key"))
+        connection.execute(text("ALTER TABLE courses DROP CONSTRAINT IF EXISTS uq_courses_term_crn"))
+        connection.execute(text("CREATE INDEX IF NOT EXISTS ix_courses_crn ON courses (crn)"))
         connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_courses_term_crn ON courses (term_code, crn)"))
         connection.execute(
             text("CREATE INDEX IF NOT EXISTS ix_courses_term_listed_code ON courses (term_code, is_listed, course_code)")

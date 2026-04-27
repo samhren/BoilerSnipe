@@ -21,7 +21,7 @@ from .sniper import run_sniper
 
 
 def _startup_inventory_marker_key() -> str:
-    return f"startup_inventory_completed:{settings.CURRENT_TERM_CODE}"
+    return f"startup_inventory_completed:v2:{settings.CURRENT_TERM_CODE}"
 
 
 def job_inventory_scraper():
