@@ -26,6 +26,28 @@ def _ensure_google_id(inspector) -> None:
         connection.execute(text("ALTER TABLE users ADD COLUMN google_id VARCHAR"))
 
 
+def _ensure_app_state_table() -> None:
+    if engine.dialect.name == "sqlite":
+        statement = """
+            CREATE TABLE IF NOT EXISTS app_state (
+                key VARCHAR NOT NULL PRIMARY KEY,
+                value VARCHAR,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        """
+    else:
+        statement = """
+            CREATE TABLE IF NOT EXISTS app_state (
+                key VARCHAR NOT NULL PRIMARY KEY,
+                value VARCHAR,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            )
+        """
+
+    with engine.begin() as connection:
+        connection.execute(text(statement))
+
+
 def _sqlite_courses_need_rebuild(inspector) -> bool:
     if "courses" not in inspector.get_table_names():
         return False
@@ -165,6 +187,8 @@ def _migrate_postgres() -> None:
 def migrate() -> None:
     """Run lightweight schema migrations needed by the app."""
     logger.info("Starting database migration check...")
+
+    _ensure_app_state_table()
 
     if engine.dialect.name == "sqlite":
         _migrate_sqlite()

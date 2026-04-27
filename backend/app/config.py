@@ -42,6 +42,8 @@ class Settings(BaseSettings):
     CURRENT_TERM_CODE: str = "202710"
     CURRENT_TERM_NAME: str = "Fall 2026"
     INVENTORY_SUBJECTS: str = ",".join(DEFAULT_INVENTORY_SUBJECTS)
+    RUN_STARTUP_INVENTORY_ONCE: bool = True
+    ENABLE_RECURRING_INVENTORY: bool = False
 
     # CORS
     FRONTEND_URL: Optional[str] = None

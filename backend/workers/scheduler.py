@@ -13,10 +13,15 @@ from datetime import datetime
 sys.path.append(str(Path(__file__).parent.parent))
 
 from app.config import settings
-from app.database import SessionLocal
+from app.database import SessionLocal, init_db
+from app.migrate import migrate
 from app import models
 from .inventory_scraper import run_inventory_scraper
 from .sniper import run_sniper
+
+
+def _startup_inventory_marker_key() -> str:
+    return f"startup_inventory_completed:{settings.CURRENT_TERM_CODE}"
 
 
 def job_inventory_scraper():
@@ -26,13 +31,14 @@ def job_inventory_scraper():
     print(f"{'='*60}\n")
 
     try:
-        run_inventory_scraper(
+        return run_inventory_scraper(
             term_code=settings.CURRENT_TERM_CODE,
             term_name=settings.CURRENT_TERM_NAME,
             subjects=settings.inventory_subject_list
         )
     except Exception as e:
         print(f"Error in inventory scraper job: {str(e)}")
+        return 0
 
 
 def job_seat_sniper():
@@ -47,13 +53,38 @@ def job_seat_sniper():
         print(f"Error in seat sniper job: {str(e)}")
 
 
-def run_startup_scrape():
-    """Run initial scrape on startup to update course inventory"""
+def run_startup_scrape_once():
+    """Run the current-term inventory scrape once, then persist a completion marker."""
+    if not settings.RUN_STARTUP_INVENTORY_ONCE:
+        print("[STARTUP] One-time inventory scrape disabled.", flush=True)
+        return
+
+    marker_key = _startup_inventory_marker_key()
+    db = SessionLocal()
+    try:
+        existing_marker = db.query(models.AppState).filter(models.AppState.key == marker_key).first()
+        if existing_marker:
+            print(f"[STARTUP] Inventory already scraped for {settings.CURRENT_TERM_NAME}; skipping.", flush=True)
+            return
+    finally:
+        db.close()
+
     print("\n[STARTUP] Preparing for initial update scrape...", flush=True)
     try:
-        # We perform an upsert scrape, preserving existing user tracks/data
-        print("[STARTUP] Starting inventory update...", flush=True)
-        job_inventory_scraper()
+        print(f"[STARTUP] Starting one-time inventory update for {settings.CURRENT_TERM_NAME}...", flush=True)
+        scraped_count = job_inventory_scraper()
+        if scraped_count <= 0:
+            print("[STARTUP] Inventory scrape returned no courses; will retry on next worker start.", flush=True)
+            return
+
+        db = SessionLocal()
+        try:
+            marker = models.AppState(key=marker_key, value=str(scraped_count))
+            db.merge(marker)
+            db.commit()
+        finally:
+            db.close()
+
         print("[STARTUP] Initial update completed successfully.", flush=True)
     except Exception as e:
         print(f"Warning: Startup scrape failed: {e}", flush=True)
@@ -61,17 +92,19 @@ def run_startup_scrape():
 
 def start_scheduler():
     """Start the background job scheduler"""
+    init_db()
+    migrate()
+
     scheduler = BlockingScheduler()
 
-    # Add Inventory Scraper job (runs daily at 2 AM by default)
-    # Parses INVENTORY_CRON from settings (e.g., "0 2 * * *")
-    scheduler.add_job(
-        job_inventory_scraper,
-        trigger=CronTrigger.from_crontab(settings.INVENTORY_CRON),
-        id='inventory_scraper',
-        name='Daily Inventory Scraper',
-        replace_existing=True
-    )
+    if settings.ENABLE_RECURRING_INVENTORY:
+        scheduler.add_job(
+            job_inventory_scraper,
+            trigger=CronTrigger.from_crontab(settings.INVENTORY_CRON),
+            id='inventory_scraper',
+            name='Inventory Scraper',
+            replace_existing=True
+        )
 
     # Add Seat Sniper job (runs every 5 minutes by default)
     scheduler.add_job(
@@ -86,12 +119,12 @@ def start_scheduler():
     print("BOILERSNIPE - BACKGROUND SCHEDULER")
     print("="*60)
     print(f"\nScheduled Jobs:")
-    print(f"  1. Inventory Scraper: {settings.INVENTORY_CRON} (Daily at 2 AM)")
-    print(f"  2. Seat Sniper: Every {settings.SNIPER_INTERVAL_MINUTES} minutes")
+    print(f"  1. One-time Inventory Scraper: {'Enabled' if settings.RUN_STARTUP_INVENTORY_ONCE else 'Disabled'}")
+    print(f"  2. Recurring Inventory Scraper: {settings.INVENTORY_CRON if settings.ENABLE_RECURRING_INVENTORY else 'Disabled'}")
+    print(f"  3. Seat Sniper: Every {settings.SNIPER_INTERVAL_MINUTES} minutes")
     print(f"\nScheduler started at {datetime.now()}")
-    
-    # Run startup scrape (Clear DB + Scrape)
-    # run_startup_scrape()
+
+    run_startup_scrape_once()
 
     print("="*60)
     print("\nPress Ctrl+C to stop\n")

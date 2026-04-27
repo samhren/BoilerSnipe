@@ -143,6 +143,8 @@ Edit `.env` to configure:
 - **SNIPER_INTERVAL_MINUTES**: Minutes between seat checks
 - **CURRENT_TERM_CODE** / **CURRENT_TERM_NAME**: Default term the app scrapes and searches
 - **INVENTORY_SUBJECTS**: Comma-separated subject list for the inventory scraper
+- **RUN_STARTUP_INVENTORY_ONCE**: Run current-term inventory once when the worker starts
+- **ENABLE_RECURRING_INVENTORY**: Keep inventory scraping on cron after the startup scrape
 
 ## Development
 

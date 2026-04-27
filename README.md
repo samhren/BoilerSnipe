@@ -121,6 +121,8 @@ This project is optimized for deployment on [Railway](https://railway.app/).
 | `CURRENT_TERM_CODE` | Default Purdue term code to scrape and search | No |
 | `CURRENT_TERM_NAME` | Display name for the default term | No |
 | `INVENTORY_SUBJECTS` | Comma-separated subject list for inventory scraping | No |
+| `RUN_STARTUP_INVENTORY_ONCE` | Run current-term inventory once when worker starts (default: `true`) | No |
+| `ENABLE_RECURRING_INVENTORY` | Keep inventory on cron after startup scrape (default: `false`) | No |
 
 ### Frontend (`frontend/.env`)
 

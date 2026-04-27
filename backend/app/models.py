@@ -108,6 +108,15 @@ class NotificationLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class AppState(Base):
+    """Persistent app-level markers for background jobs."""
+    __tablename__ = "app_state"
+
+    key = Column(String, primary_key=True)
+    value = Column(String)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
 class GradeDistribution(Base):
     """Historical grade distribution for courses by instructor and semester"""
     __tablename__ = "grade_distributions"
