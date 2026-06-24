@@ -1,21 +1,23 @@
-# 🚂 BoilerSnipe
+# BoilerSnipe
 
 > **Purdue Course Availability Tracker & Sniper**
 
+**Live at [boilersnipe.com](https://boilersnipe.com/)**
+
 BoilerSnipe is a full-stack web application that monitors Purdue University course seat availability in real-time. Students can track specific courses and receive instant **Email Notifications** when a seat becomes available.
 
-## ✨ Features
+## Features
 
-- **🔍 Smart Course Search**: Instantly find courses by Subject, Course Code, or CRN.
-- **⚡ Real-time Monitoring**: Automatically checks seat availability every few minutes.
-- **📧 Instant Alerts**: Receive emails immediately when a spot opens up (via Resend).
-- **🔐 Modern Auth**: Secure login with **Google Single Sign-On (SSO)**.
-- **📊 Live Dashboard**: View status of all your tracked courses in one place.
-- **🐳 Dockerized**: Fully containerized for consistent deployment.
+- **Smart Course Search**: Instantly find courses by Subject, Course Code, or CRN.
+- **Real-time Monitoring**: Automatically checks seat availability every few minutes.
+- **Instant Alerts**: Receive emails immediately when a spot opens up (via Resend).
+- **Modern Auth**: Secure login with **Google Single Sign-On (SSO)**.
+- **Live Dashboard**: View status of all your tracked courses in one place.
+- **Dockerized**: Fully containerized for consistent deployment.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Python 3.10)
@@ -33,7 +35,7 @@ BoilerSnipe is a full-stack web application that monitors Purdue University cour
 
 ---
 
-## 🚀 Quick Start (Local Development)
+## Quick Start (Local Development)
 
 ### Prerequisites
 - Node.js 18+
@@ -51,7 +53,7 @@ pip install -r requirements.txt
 
 # Create .env file
 cp .env.example .env
-# ⚠️ Update .env with your credentials (RESEND_API_KEY, GOOGLE_CLIENT_ID, etc.)
+# Update .env with your credentials (RESEND_API_KEY, GOOGLE_CLIENT_ID, etc.)
 
 # Start the Server
 uvicorn app.main:app --reload
@@ -74,7 +76,7 @@ Visit `http://localhost:5173` to see the app!
 
 ---
 
-## ☁️ Deployment on Railway
+## Deployment on Railway
 
 This project is optimized for deployment on [Railway](https://railway.app/).
 
@@ -106,7 +108,7 @@ This project is optimized for deployment on [Railway](https://railway.app/).
 
 ---
 
-## 🔑 Environment Variables Reference
+## Environment Variables Reference
 
 ### Backend (`backend/.env`)
 
@@ -149,7 +151,7 @@ The system operates in two phases to minimize load on Purdue's servers:
 
 ---
 
-## 📝 License
+## License
 
 MIT License.
 **Disclaimer**: This project is not affiliated with Purdue University. Use responsibly.
