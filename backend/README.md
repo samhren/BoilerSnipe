@@ -60,10 +60,12 @@ python -m workers.inventory_scraper
 python -m workers.sniper
 ```
 
-**Test Twilio notifications:**
+**Test email notifications:**
 ```bash
-python -m workers.notifier +15551234567
+python -m workers.notifier you@example.com
 ```
+Requires `RESEND_API_KEY` to be set.
+The sender address is configured in `workers/notifier.py`.
 
 ## API Endpoints
 
@@ -107,13 +109,13 @@ python -m workers.notifier +15551234567
   3. Parse "Registration Availability" table
   4. Extract seat counts (Capacity, Actual, Remaining)
   5. Detect changes (closed → open, open → closed)
-  6. Send SMS notifications via Twilio
+  6. Send email notifications via Resend
   7. Update database
 
 ## Database Schema
 
 ### Users
-- id, email, phone_number, hashed_password, is_active, created_at
+- id, google_id, email, hashed_password, is_active, created_at
 
 ### Courses
 - id, crn, course_code, title, instructor, time, days, term_code, term_name, section, is_listed
@@ -128,16 +130,20 @@ python -m workers.notifier +15551234567
 
 ### NotificationLogs
 - id, user_id, course_id
-- notification_type, message, phone_number, status, error_message
+- notification_type, message, status, error_message
 - created_at
+
+### AppState
+- key, value (internal key/value store for scheduler bookkeeping)
 
 ## Configuration
 
 Edit `.env` to configure:
 
 - **DATABASE_URL**: SQLite (default) or PostgreSQL connection string
-- **SECRET_KEY**: JWT secret for authentication
-- **TWILIO_***: Twilio credentials for SMS notifications
+- **SECRET_KEY**: JWT signing secret. Required, with no default: the app raises a `ValidationError` at startup if it is missing
+- **GOOGLE_CLIENT_ID**: OAuth Client ID, used as the expected audience when validating Google ID tokens. Must match the frontend's `VITE_GOOGLE_CLIENT_ID`
+- **RESEND_API_KEY**: Resend credentials for email notifications
 - **PROXY_URL**: Optional proxy for rotating IPs
 - **INVENTORY_CRON**: Cron expression for inventory scraper schedule
 - **SNIPER_INTERVAL_MINUTES**: Minutes between seat checks

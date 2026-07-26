@@ -39,11 +39,17 @@ def verify_token(token: str) -> dict:
 
 
 def verify_google_token(token: str) -> Optional[dict]:
-    """Verify Google ID token"""
+    """Verify a Google ID token was issued by Google *and* minted for this app"""
+    if not settings.GOOGLE_CLIENT_ID:
+        # Fail closed. Without an expected audience we can only tell that Google
+        # issued the token, not that it was issued to us, so any Google ID token
+        # from any app would authenticate as its owner.
+        return None
+
     try:
-        # We don't specify client_id here to allow any client ID (from our frontend)
-        # In production, you should pass the expected client_id to verify_oauth2_token
-        id_info = id_token.verify_oauth2_token(token, requests.Request())
+        id_info = id_token.verify_oauth2_token(
+            token, requests.Request(), settings.GOOGLE_CLIENT_ID
+        )
         return id_info
     except ValueError:
         return None

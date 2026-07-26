@@ -25,10 +25,14 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./purdue_courses.db"
 
-    # JWT
-    SECRET_KEY: str = "your-secret-key-change-this-in-production"
+    # JWT - no default, a missing SECRET_KEY must fail startup rather than
+    # fall back to a value that is public in the repo
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+
+    # Google OAuth - expected audience for ID tokens sent to /api/auth/google
+    GOOGLE_CLIENT_ID: Optional[str] = None
 
     # Resend Email
     RESEND_API_KEY: Optional[str] = None
