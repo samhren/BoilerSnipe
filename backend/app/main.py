@@ -59,9 +59,6 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     """Initialize database on startup"""
-    print(f"DEBUG: ALLOWED_HOSTS={settings.ALLOWED_HOSTS}")
-    print(f"DEBUG: FRONTEND_URL={settings.FRONTEND_URL}")
-    print(f"DEBUG: CORS Origins={origins}")
     init_db()
     migrate()
 
