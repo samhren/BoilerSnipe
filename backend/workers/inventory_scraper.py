@@ -84,9 +84,7 @@ class InventoryScraper:
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--window-size=1920,1080")
-        chrome_options.add_argument(
-            "user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        )
+        chrome_options.add_argument(f"user-agent={settings.USER_AGENT}")
 
         # 1. Check strict CHROMEDRIVER_PATH environment variable (Highest Priority)
         chromedriver_bin = os.environ.get("CHROMEDRIVER_PATH")

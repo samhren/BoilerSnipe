@@ -9,6 +9,9 @@ const Footer = () => {
             &copy; {new Date().getFullYear()} BoilerSnipe. Not affiliated with Purdue University.
           </div>
           <div className="flex gap-6 text-sm">
+            <Link to="/about" className="hover:text-white transition-colors">
+              About &amp; Transparency
+            </Link>
             <Link to="/privacy" className="hover:text-white transition-colors">
               Privacy Policy
             </Link>
