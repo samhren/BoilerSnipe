@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Search from './pages/Search';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import About from './pages/About';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
             />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/about" element={<About />} />
           </Routes>
           <Footer />
         </div>

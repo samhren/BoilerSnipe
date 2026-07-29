@@ -40,6 +40,12 @@ class Settings(BaseSettings):
     # Proxy (optional)
     PROXY_URL: Optional[str] = None
 
+    # Identify our automated requests instead of impersonating a browser, so
+    # Purdue IT can see who is making them and contact us directly.
+    USER_AGENT: str = (
+        "BoilerSnipe/1.0 (+https://boilersnipe.com/about; contact@boilersnipe.com)"
+    )
+
     # Scraper settings
     INVENTORY_CRON: str = "0 2 * * 0"  # Weekly on Sunday at 2 AM
     SNIPER_INTERVAL_MINUTES: float = 5

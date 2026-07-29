@@ -34,7 +34,7 @@ class SeatSniper:
         self.use_proxy = use_proxy
         self.session = requests.Session()
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            'User-Agent': settings.USER_AGENT
         })
 
         # Setup proxy if configured
