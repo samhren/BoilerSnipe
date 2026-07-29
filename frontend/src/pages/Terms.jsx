@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const Terms = () => {
   return (
     <div className="min-h-screen bg-slate-50">
@@ -5,7 +7,7 @@ const Terms = () => {
         <h1 className="text-3xl font-bold text-slate-800 mb-8">Terms of Service</h1>
 
         <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 space-y-6 text-slate-600">
-          <p className="text-sm text-slate-500">Last updated: January 2025</p>
+          <p className="text-sm text-slate-500">Last updated: July 2026</p>
 
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">1. Acceptance of Terms</h2>
@@ -14,12 +16,20 @@ const Terms = () => {
 
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">2. Description of Service</h2>
-            <p>BoilerSnipe is a course seat availability tracking service for Purdue University students. We monitor course seat availability and notify users when seats become available in their tracked courses.</p>
+            <p className="mb-2">BoilerSnipe is a free course seat availability tracking service for Purdue University students. We monitor course seat availability and notify users when seats become available in their tracked courses. BoilerSnipe never registers you for a course; you do that yourself through Purdue's own system.</p>
+            <p>
+              BoilerSnipe is not affiliated with, endorsed by, or connected to Purdue University.
+              See our{' '}
+              <Link to="/about" className="text-slate-800 font-medium underline">
+                About &amp; Transparency
+              </Link>{' '}
+              page for exactly what the service accesses.
+            </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">3. User Accounts</h2>
-            <ul className="list-disc list-inside space-y-1 ml-4">
+            <ul className="list-disc list-outside space-y-1 pl-5">
               <li>You must provide a valid email address to create an account</li>
               <li>You are responsible for maintaining the security of your account</li>
               <li>You must not share your account credentials with others</li>
@@ -30,7 +40,7 @@ const Terms = () => {
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">4. Acceptable Use</h2>
             <p className="mb-2">You agree NOT to:</p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
+            <ul className="list-disc list-outside space-y-1 pl-5">
               <li>Use the service for any unlawful purpose</li>
               <li>Attempt to gain unauthorized access to our systems</li>
               <li>Interfere with or disrupt the service</li>
@@ -46,8 +56,8 @@ const Terms = () => {
 
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">6. No Guarantee of Results</h2>
-            <p>While we make every effort to provide accurate and timely notifications, we cannot guarantee:</p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
+            <p className="mb-2">While we make every effort to provide accurate and timely notifications, we cannot guarantee:</p>
+            <ul className="list-disc list-outside space-y-1 pl-5">
               <li>That you will be able to enroll in a course after receiving a notification</li>
               <li>The accuracy of seat availability data from Purdue's systems</li>
               <li>Delivery of notifications (email delivery depends on third-party services)</li>
@@ -56,7 +66,23 @@ const Terms = () => {
 
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">7. Intellectual Property</h2>
-            <p>All content, features, and functionality of BoilerSnipe are owned by us and are protected by copyright and other intellectual property laws.</p>
+            <p className="mb-2">
+              BoilerSnipe's source code is open source and released under the MIT license at{' '}
+              <a
+                href="https://github.com/samhren/BoilerSnipe"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-800 font-medium underline"
+              >
+                github.com/samhren/BoilerSnipe
+              </a>
+              . You may use it under that license.
+            </p>
+            <p>
+              Course data shown in the service comes from Purdue University and belongs to Purdue.
+              "Purdue," "Boilermaker," and related names and logos are trademarks of their
+              respective owners.
+            </p>
           </section>
 
           <section>
@@ -86,7 +112,17 @@ const Terms = () => {
 
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">13. Contact</h2>
-            <p>For questions about these terms, please contact us at legal@boilersnipe.com</p>
+            <p>
+              For questions about these terms, contact us at{' '}
+              <a href="mailto:contact@boilersnipe.com" className="text-slate-800 font-medium underline">
+                contact@boilersnipe.com
+              </a>
+              . For questions about your data, see our{' '}
+              <Link to="/privacy" className="text-slate-800 font-medium underline">
+                Privacy Policy
+              </Link>
+              .
+            </p>
           </section>
         </div>
       </div>

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const About = () => {
   return (
     <div className="min-h-screen bg-slate-50">
@@ -31,7 +33,7 @@ const About = () => {
               These pages are served to anyone on the internet without logging in.
             </p>
             <p className="mb-2">From those pages we read only:</p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
+            <ul className="list-disc list-outside space-y-1 pl-5">
               <li>The course listing (CRN, course code, title, instructor, meeting time, section)</li>
               <li>The "Registration Availability" table (seat capacity, seats taken, seats remaining)</li>
             </ul>
@@ -43,7 +45,7 @@ const About = () => {
 
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">How often we request pages</h2>
-            <ul className="list-disc list-inside space-y-1 ml-4">
+            <ul className="list-disc list-outside space-y-1 pl-5">
               <li>
                 Seat checks run on a fixed interval (currently every 5 minutes) and only for course
                 sections that at least one signed-in user is actively tracking. We do not poll the
@@ -66,14 +68,12 @@ const About = () => {
               Our requests identify themselves rather than imitating a web browser. They are sent
               with this user agent:
             </p>
-            <pre className="text-xs sm:text-sm bg-slate-100 text-slate-700 rounded-lg p-3 overflow-x-auto">
-              <code>BoilerSnipe/1.0 (+https://boilersnipe.com/about; contact@boilersnipe.com)</code>
-            </pre>
+            <pre className="text-xs sm:text-sm bg-slate-100 text-slate-700 rounded-lg p-3 overflow-x-auto"><code>BoilerSnipe/1.0 (+https://boilersnipe.com/about; contact@boilersnipe.com)</code></pre>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">What we never do</h2>
-            <ul className="list-disc list-inside space-y-1 ml-4">
+            <ul className="list-disc list-outside space-y-1 pl-5">
               <li>We never ask for, store, or use a student's Purdue credentials or Career Account.</li>
               <li>We never log in to myPurdue or any authenticated Purdue system.</li>
               <li>
@@ -139,9 +139,26 @@ const About = () => {
           <section>
             <h2 className="text-xl font-semibold text-slate-800 mb-3">Contact</h2>
             <p>
-              General questions: <a href="mailto:contact@boilersnipe.com" className="underline">contact@boilersnipe.com</a>
+              General questions:{' '}
+              <a href="mailto:contact@boilersnipe.com" className="text-slate-800 font-medium underline">
+                contact@boilersnipe.com
+              </a>
               <br />
-              Privacy: <a href="mailto:privacy@boilersnipe.com" className="underline">privacy@boilersnipe.com</a>
+              Privacy:{' '}
+              <a href="mailto:privacy@boilersnipe.com" className="text-slate-800 font-medium underline">
+                privacy@boilersnipe.com
+              </a>
+            </p>
+            <p className="mt-2">
+              See also our{' '}
+              <Link to="/privacy" className="text-slate-800 font-medium underline">
+                Privacy Policy
+              </Link>{' '}
+              and{' '}
+              <Link to="/terms" className="text-slate-800 font-medium underline">
+                Terms of Service
+              </Link>
+              .
             </p>
           </section>
         </div>
