@@ -1,99 +1,54 @@
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
+
 const TrackCard = forwardRef(({ track, onDelete, onUpdate }, ref) => {
   const { course } = track;
   const isUpdating = course.seats_capacity === 0 && course.seats_remaining === 0;
-
-  const getStatusStyles = () => {
-    if (isUpdating) return { bg: 'bg-slate-300', text: 'text-slate-600', label: 'Updating...' };
-    if (course.seats_remaining > 5) return { bg: 'bg-emerald-500', text: 'text-white', label: 'Available' };
-    if (course.seats_remaining > 0) return { bg: 'bg-amber-500', text: 'text-white', label: 'Limited' };
-    return { bg: 'bg-slate-400', text: 'text-white', label: 'Full' };
-  };
-
-  const status = getStatusStyles();
+  const status = isUpdating
+    ? { dot: 'bg-purdue-gold animate-pulse', label: 'Checking availability', color: 'text-muted' }
+    : course.seats_remaining > 5
+      ? { dot: 'bg-available', label: `${course.seats_remaining} seats available`, color: 'text-available' }
+      : course.seats_remaining > 0
+        ? { dot: 'bg-limited', label: `${course.seats_remaining} ${course.seats_remaining === 1 ? 'seat' : 'seats'} left`, color: 'text-limited' }
+        : { dot: 'bg-muted', label: 'Full', color: 'text-muted' };
 
   return (
-    <div ref={ref} className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 transition-all hover:shadow-md scroll-mt-24 transition-colors duration-500">
-      {/* Header with status */}
-      <div className={`${status.bg} px-4 py-2 flex justify-between items-center`}>
-        <span className={`text-sm font-medium ${status.text}`}>{status.label}</span>
-        {!isUpdating && (
-          <span className={`text-sm font-bold ${status.text}`}>
-            {Math.max(0, course.seats_remaining)}/{course.seats_capacity} seats
-          </span>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-lg font-semibold text-slate-800">{course.course_code}</h3>
-              {course.schedule_type && (
-                <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
-                  {course.schedule_type}
-                </span>
-              )}
-            </div>
-            <p className="text-slate-600 text-sm">{course.title}</p>
+    <article ref={ref} className="scroll-mt-24 border-b border-line p-4 transition-colors duration-500 last:border-0 sm:p-5">
+      <div className="grid gap-5 lg:grid-cols-[1.35fr_0.9fr_0.9fr_auto] lg:items-center">
+        <div className={course.seats_remaining <= 0 && !isUpdating ? 'text-muted' : ''}>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-sm font-semibold">{course.course_code} · {course.title}</h2>
+            {course.schedule_type && <span className="rounded border border-line bg-paper px-2 py-0.5 text-[11px] text-muted">{course.schedule_type}</span>}
           </div>
+          <p className="mono-detail mt-1">CRN {course.crn}{course.section ? ` · Section ${course.section}` : ''}</p>
         </div>
 
-        <div className="space-y-1.5 text-sm mb-4">
-          <div className="flex">
-            <span className="text-slate-400 w-20">CRN</span>
-            <span className="text-slate-700 font-mono">{course.crn}</span>
-          </div>
-          <div className="flex">
-            <span className="text-slate-400 w-20">Time</span>
-            <span className="text-slate-700">{course.time || 'TBA'} {course.days && `(${course.days})`}</span>
-          </div>
-          <div className="flex">
-            <span className="text-slate-400 w-20">Instructor</span>
-            <span className="text-slate-700">{course.instructor || 'TBA'}</span>
-          </div>
+        <div className="text-sm">
+          <div className="font-mono text-xs">{course.days || 'TBA'} · {course.time || 'TBA'}</div>
+          <div className="mt-1 truncate text-xs text-muted">{course.instructor || 'Instructor TBA'}</div>
         </div>
 
-        {/* Notification toggles */}
-        <div className="border-t border-slate-100 pt-3 space-y-2">
-          <label className="flex items-center justify-between cursor-pointer group">
-            <span className="text-sm text-slate-600 group-hover:text-slate-800">Notify on open</span>
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={track.notify_on_open}
-                onChange={(e) => onUpdate(track.id, { notify_on_open: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-amber-500 transition-colors"></div>
-              <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
-            </div>
+        <div className={`flex items-center gap-2 text-sm ${status.color}`}>
+          <span className={`status-dot ${status.dot}`} />
+          {status.label}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3 lg:justify-end">
+          <label className="flex cursor-pointer items-center gap-2 text-xs text-muted">
+            Notify on open
+            <span className="relative inline-flex">
+              <input type="checkbox" checked={track.notify_on_open} onChange={(e) => onUpdate(track.id, { notify_on_open: e.target.checked })} className="peer sr-only" />
+              <span className="h-[22px] w-[38px] rounded-full bg-line transition-colors peer-checked:bg-deep-gold" />
+              <span className="absolute left-0.5 top-0.5 h-[18px] w-[18px] rounded-full bg-canvas transition-transform peer-checked:translate-x-4" />
+            </span>
           </label>
-
-          <label className="flex items-center justify-between cursor-pointer group">
-            <span className="text-sm text-slate-600 group-hover:text-slate-800">Notify on close</span>
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={track.notify_on_close}
-                onChange={(e) => onUpdate(track.id, { notify_on_close: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:bg-amber-500 transition-colors"></div>
-              <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
-            </div>
-          </label>
+          <button onClick={() => onDelete(track.id)} className="min-h-11 text-xs font-semibold text-danger hover:text-red-700">Stop watching</button>
         </div>
-
-        <button
-          onClick={() => onDelete(track.id)}
-          className="w-full mt-4 py-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          Remove
-        </button>
       </div>
-    </div>
+      <label className="mt-3 flex cursor-pointer items-center gap-2 border-t border-line pt-3 text-xs text-muted lg:ml-auto lg:w-fit lg:border-0 lg:pt-0">
+        <input type="checkbox" checked={track.notify_on_close} onChange={(e) => onUpdate(track.id, { notify_on_close: e.target.checked })} className="accent-deep-gold" />
+        Also notify me when this section closes
+      </label>
+    </article>
   );
 });
 

@@ -2,14 +2,15 @@ import { Link } from 'react-router-dom';
 
 const About = () => {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-        <h1 className="text-3xl font-bold text-slate-800 mb-2">About &amp; Transparency</h1>
-        <p className="text-slate-500 mb-8">
+    <div className="page-shell">
+      <div className="mx-auto max-w-3xl px-5 py-12 sm:px-7 sm:py-16">
+        <p className="eyebrow mb-3">Independent &amp; open source</p>
+        <h1 className="display-title mb-3">About &amp; transparency</h1>
+        <p className="mb-9 max-w-2xl text-muted">
           How BoilerSnipe works, exactly what it accesses, and how to reach us.
         </p>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 space-y-6 text-slate-600">
+        <div className="legal-copy space-y-7 border-t border-line pt-7">
           <p className="text-sm text-slate-500">Last updated: July 2026</p>
 
           <section>
@@ -96,7 +97,7 @@ const About = () => {
             </p>
           </section>
 
-          <section className="border-l-4 border-slate-800 bg-slate-50 rounded-r-lg p-5">
+          <section className="rounded-r-lg border-l-[3px] border-l-deep-gold bg-paper p-5">
             <h2 className="text-xl font-semibold text-slate-800 mb-3">For Purdue faculty, staff, and IT</h2>
             <p className="mb-2">
               If you work for Purdue and have any concern about this tool, please contact us at{' '}

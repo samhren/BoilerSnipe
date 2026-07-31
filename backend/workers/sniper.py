@@ -191,47 +191,13 @@ class SeatSniper:
             seats: Number of seats available
         """
         # Import here to avoid circular dependency
-        from .notifier import send_email_notification
+        from .notifier import build_course_notification_email, send_email_notification
 
         try:
             user = track.user
             course = track.course
 
-            # Create message
-            if notification_type == "seat_open":
-                subject = f"🎯 SEAT OPEN! {course.course_code}"
-                message = f"""
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                    <h2 style="color: #2e7d32; margin-top: 0;">🎯 Seat Open!</h2>
-                    <p style="font-size: 16px;">Good news! A seat has opened up for <strong>{course.course_code} - {course.title}</strong>.</p>
-                    
-                    <div style="background-color: #f5f5f5; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                        <p style="margin: 5px 0;"><strong>CRN:</strong> {course.crn}</p>
-                        <p style="margin: 5px 0;"><strong>Seats Available:</strong> {seats}</p>
-                        <p style="margin: 5px 0;"><strong>Time:</strong> {course.time} {course.days}</p>
-                        <p style="margin: 5px 0;"><strong>Instructor:</strong> {course.instructor}</p>
-                    </div>
-
-                    <p>Go register now before it's gone!</p>
-                    
-                    <a href="https://mypurdue.purdue.edu" style="display: inline-block; background-color: #cfb991; color: #000; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Go to myPurdue</a>
-                </div>
-                """
-            else:
-                subject = f"⚠️ Seat Closed: {course.course_code}"
-                message = f"""
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
-                    <h2 style="color: #d32f2f; margin-top: 0;">⚠️ Seat Closed</h2>
-                    <p style="font-size: 16px;">Bad news. The seat for <strong>{course.course_code} - {course.title}</strong> has been filled.</p>
-                    
-                    <div style="background-color: #f5f5f5; padding: 15px; border-radius: 6px; margin: 20px 0;">
-                        <p style="margin: 5px 0;"><strong>CRN:</strong> {course.crn}</p>
-                        <p style="margin: 5px 0;"><strong>Status:</strong> All seats filled</p>
-                    </div>
-
-                    <p>We'll keep watching and let you know if another one opens up.</p>
-                </div>
-                """
+            subject, message = build_course_notification_email(course, notification_type, seats)
 
             # Send Email
             success, error = send_email_notification(user.email, subject, message)

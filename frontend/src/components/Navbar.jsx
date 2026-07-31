@@ -8,9 +8,12 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
-  const isActive = (path) => location.pathname === path;
+  const navItems = user
+    ? [{ to: '/dashboard', label: 'Watchlist' }, { to: '/search', label: 'Search' }]
+    : [{ to: '/about', label: 'About' }];
 
-  const handleNavClick = (destination) => {
+  const handleNav = (destination) => {
+    setMenuOpen(false);
     rybbit.track('Navigation Click', {
       destination,
       from: location.pathname,
@@ -18,138 +21,96 @@ const Navbar = () => {
     });
   };
 
-  const handleMobileMenuToggle = () => {
-    const newState = !menuOpen;
-    setMenuOpen(newState);
-    rybbit.track('Mobile Menu Toggle', { opened: newState });
-  };
+  const linkClass = (path) => `border-b py-2 text-sm font-medium transition-colors sm:border-0 ${
+    location.pathname === path
+      ? 'border-ink text-ink'
+      : 'border-transparent text-muted hover:text-ink'
+  }`;
 
   return (
-    <nav className="bg-slate-900 text-white sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex justify-between items-center h-14">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2" onClick={() => { setMenuOpen(false); handleNavClick('/'); }}>
-            <span className="text-xl">🎯</span>
-            <span className="font-bold text-lg">BoilerSnipe</span>
-          </Link>
+    <header className="sticky top-0 z-50 border-b border-line bg-canvas/95 backdrop-blur">
+      <nav className="mx-auto max-w-6xl px-5 sm:px-7" aria-label="Main navigation">
+        <div className="flex h-16 items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link
+              to="/"
+              className="flex items-center gap-2.5 text-[15px] font-semibold tracking-[-0.01em]"
+              onClick={() => handleNav('/')}
+            >
+              <img src="/boilersnipe.svg" alt="" className="h-6 w-6" />
+              BoilerSnipe
+            </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden sm:flex items-center gap-1">
+            <div className="hidden items-center gap-6 sm:flex">
+              {navItems.map((item) => (
+                <Link key={item.to} to={item.to} onClick={() => handleNav(item.to)} className={linkClass(item.to)}>
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="hidden items-center gap-5 sm:flex">
             {user ? (
               <>
-                <Link
-                  to="/dashboard"
-                  onClick={() => handleNavClick('/dashboard')}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                    }`}
-                >
-                  Dashboard
+                <span className="max-w-52 truncate font-mono text-xs text-muted">{user.email}</span>
+                <button onClick={logout} className="text-sm font-medium text-muted hover:text-ink">Sign out</button>
+                <Link to="/search" onClick={() => handleNav('/search')} className="btn-primary min-h-10 px-4 py-2 text-sm">
+                  Find a section
                 </Link>
-                <Link
-                  to="/search"
-                  onClick={() => handleNavClick('/search')}
-                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive('/search') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
-                    }`}
-                >
-                  Search
-                </Link>
-                <div className="w-px h-6 bg-slate-700 mx-2"></div>
-                <span className="text-sm text-slate-400 px-2">{user.email}</span>
-                <button
-                  onClick={logout}
-                  className="px-3 py-2 text-sm text-slate-300 hover:text-white transition-colors"
-                >
-                  Logout
-                </button>
               </>
             ) : (
               <>
-                <Link
-                  to="/login"
-                  onClick={() => handleNavClick('/login')}
-                  className="px-3 py-2 text-sm text-slate-300 hover:text-white transition-colors"
-                >
-                  Login
+                <Link to="/login" onClick={() => handleNav('/login')} className="text-sm font-medium text-muted hover:text-ink">
+                  Sign in
                 </Link>
-                <Link
-                  to="/register"
-                  onClick={() => handleNavClick('/register')}
-                  className="px-4 py-2 bg-amber-500 text-slate-900 rounded-lg text-sm font-semibold hover:bg-amber-400 transition-colors"
-                >
-                  Sign Up
+                <Link to="/register" onClick={() => handleNav('/register')} className="btn-primary min-h-10 px-4 py-2 text-sm">
+                  Find a section
                 </Link>
               </>
             )}
           </div>
 
-          {/* Mobile menu button */}
           <button
-            onClick={handleMobileMenuToggle}
-            className="sm:hidden p-2 text-slate-300 hover:text-white"
+            type="button"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-ink sm:hidden"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {menuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
+            <span className="sr-only">Menu</span>
+            <span aria-hidden="true" className="font-mono text-lg">{menuOpen ? '×' : '≡'}</span>
           </button>
         </div>
 
-        {/* Mobile menu */}
         {menuOpen && (
-          <div className="sm:hidden border-t border-slate-800 py-3 space-y-1">
-            {user ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  onClick={() => { setMenuOpen(false); handleNavClick('/dashboard'); }}
-                  className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300'
-                    }`}
-                >
-                  Dashboard
+          <div id="mobile-menu" className="border-t border-line pb-5 pt-2 sm:hidden">
+            <div className="flex flex-col">
+              {navItems.map((item) => (
+                <Link key={item.to} to={item.to} onClick={() => handleNav(item.to)} className={linkClass(item.to)}>
+                  {item.label}
                 </Link>
-                <Link
-                  to="/search"
-                  onClick={() => { setMenuOpen(false); handleNavClick('/search'); }}
-                  className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/search') ? 'bg-slate-800 text-white' : 'text-slate-300'
-                    }`}
-                >
-                  Search
-                </Link>
-                <div className="border-t border-slate-800 my-2"></div>
-                <div className="px-3 py-2 text-sm text-slate-400">{user.email}</div>
-                <button
-                  onClick={() => { logout(); setMenuOpen(false); }}
-                  className="block w-full text-left px-3 py-2 text-sm text-slate-300"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  onClick={() => { setMenuOpen(false); handleNavClick('/login'); }}
-                  className="block px-3 py-2 text-sm text-slate-300"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/register"
-                  onClick={() => { setMenuOpen(false); handleNavClick('/register'); }}
-                  className="block px-3 py-2 text-sm font-semibold text-amber-500"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
+              ))}
+              {user && <div className="py-3 font-mono text-xs text-muted">{user.email}</div>}
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                {user ? (
+                  <>
+                    <button onClick={() => { logout(); setMenuOpen(false); }} className="btn-secondary text-sm">Sign out</button>
+                    <Link to="/search" onClick={() => handleNav('/search')} className="btn-primary text-sm">Find a section</Link>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" onClick={() => handleNav('/login')} className="btn-secondary text-sm">Sign in</Link>
+                    <Link to="/register" onClick={() => handleNav('/register')} className="btn-primary text-sm">Get started</Link>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         )}
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 };
 
