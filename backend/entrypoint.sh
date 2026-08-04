@@ -7,4 +7,4 @@ PORT=${PORT:-8080}
 python -m app.migrate
 
 # Start the application
-exec uvicorn app.main:app --host :: --port "$PORT" --proxy-headers --forwarded-allow-ips '*'
+exec uvicorn app.main:app --host 0.0.0.0 --port "$PORT" --proxy-headers --forwarded-allow-ips '*'
