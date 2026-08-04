@@ -16,9 +16,10 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen bg-gray-50">
+        <div className="flex min-h-screen flex-col bg-canvas text-ink">
           <Navbar />
-          <Routes>
+          <main className="flex-1">
+            <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -41,7 +42,8 @@ function App() {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/about" element={<About />} />
-          </Routes>
+            </Routes>
+          </main>
           <Footer />
         </div>
       </AuthProvider>

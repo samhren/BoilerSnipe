@@ -2,11 +2,12 @@ import { Link } from 'react-router-dom';
 
 const Privacy = () => {
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
-        <h1 className="text-3xl font-bold text-slate-800 mb-8">Privacy Policy</h1>
+    <div className="page-shell">
+      <div className="mx-auto max-w-3xl px-5 py-12 sm:px-7 sm:py-16">
+        <p className="eyebrow mb-3">The plain-language version</p>
+        <h1 className="display-title mb-9">Privacy policy</h1>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-6 sm:p-8 space-y-6 text-slate-600">
+        <div className="legal-copy space-y-7 border-t border-line pt-7">
           <p className="text-sm text-slate-500">Last updated: July 2026</p>
 
           <section>

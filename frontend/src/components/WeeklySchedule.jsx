@@ -47,7 +47,7 @@ const WeeklySchedule = ({ tracks, onEventClick }) => {
                         dayIndex,
                         startMinutes,
                         duration: endMinutes - startMinutes,
-                        color: 'bg-indigo-100 border-indigo-200 text-indigo-800' // Can rotate colors later
+                        color: 'bg-paper border-purdue-gold text-ink'
                     });
                 }
             }
@@ -62,18 +62,21 @@ const WeeklySchedule = ({ tracks, onEventClick }) => {
 
     return (
         <div
-            className={`bg-white rounded-xl border border-slate-200 p-4 mb-6 overflow-hidden transition-all duration-300 cursor-pointer ${isExpanded ? '' : 'hover:bg-slate-50'}`}
+            className={`surface mb-7 cursor-pointer overflow-hidden p-4 transition-all duration-300 sm:p-5 ${isExpanded ? '' : 'hover:bg-paper'}`}
             onClick={() => setIsExpanded(!isExpanded)}
         >
             <div className="flex justify-between items-center mb-2">
-                <h2 className="text-lg font-bold text-slate-800">Tracked Weekly Schedule</h2>
+                <div>
+                    <p className="eyebrow mb-1">At a glance</p>
+                    <h2 className="font-display text-xl font-medium text-ink">Weekly schedule</h2>
+                </div>
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                     strokeWidth={2}
                     stroke="currentColor"
-                    className={`w-5 h-5 text-slate-500 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+                    className={`h-5 w-5 text-muted transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
                 >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                 </svg>
@@ -87,7 +90,7 @@ const WeeklySchedule = ({ tracks, onEventClick }) => {
                 >
 
                     {/* Time Column - Compact */}
-                    <div className="w-10 flex-shrink-0 relative border-r border-slate-100 mr-1 text-[10px] text-slate-400 font-medium">
+                    <div className="relative mr-1 w-10 flex-shrink-0 border-r border-line font-mono text-[10px] font-medium text-muted">
                         {Array.from({ length: TOTAL_HOURS }).map((_, i) => {
                             const hour = START_HOUR + i;
                             const displayHour = hour > 12 ? hour - 12 : hour;
@@ -109,10 +112,10 @@ const WeeklySchedule = ({ tracks, onEventClick }) => {
                     <div className="flex-1 relative overflow-x-auto no-scrollbar">
                         <div className="flex min-w-[600px] h-full relative">
                             {DAYS_FULL.map((day, dayIdx) => (
-                                <div key={day} className="flex-1 relative border-r border-slate-50 last:border-0">
+                                <div key={day} className="relative flex-1 border-r border-line last:border-0">
                                     {/* Day Header */}
-                                    <div className="text-center text-xs font-semibold text-slate-600 uppercase py-1 border-b border-slate-100 bg-slate-50/50 absolute top-0 w-full z-10 h-6">
-                                        {window.innerWidth < 640 ? day.slice(0, 1) : day.slice(0, 3)}
+                                    <div className="absolute top-0 z-10 h-6 w-full border-b border-line bg-paper py-1 text-center font-mono text-[10px] font-medium uppercase text-muted">
+                                        <span className="sm:hidden">{day.slice(0, 1)}</span><span className="hidden sm:inline">{day.slice(0, 3)}</span>
                                     </div>
 
                                     {/* Horizontal Grid Lines */}
@@ -120,7 +123,7 @@ const WeeklySchedule = ({ tracks, onEventClick }) => {
                                         {Array.from({ length: TOTAL_HOURS }).map((_, i) => (
                                             <div
                                                 key={i}
-                                                className="absolute w-full border-b border-slate-50"
+                                                className="absolute w-full border-b border-line/60"
                                                 style={{ top: `${(i / TOTAL_HOURS) * 100}%` }}
                                             ></div>
                                         ))}
@@ -144,7 +147,7 @@ const WeeklySchedule = ({ tracks, onEventClick }) => {
                                                             e.stopPropagation(); // Ensure event click doesn't trigger parent/other handlers if undesired
                                                             if (onEventClick) onEventClick(event.id);
                                                         }}
-                                                        className={`absolute inset-x-0.5 rounded px-1 py-0.5 border text-[10px] sm:text-xs overflow-hidden hover:z-20 hover:ring-2 hover:ring-indigo-400 hover:shadow-lg transition-all cursor-pointer ${event.color}`}
+                                                        className={`absolute inset-x-0.5 cursor-pointer overflow-hidden rounded border px-1 py-0.5 text-[10px] transition-all hover:z-20 hover:ring-2 hover:ring-purdue-gold sm:text-xs ${event.color}`}
                                                         style={{
                                                             top: `${top}%`,
                                                             height: `${height}%`,

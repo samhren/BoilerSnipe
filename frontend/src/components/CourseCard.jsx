@@ -107,10 +107,10 @@ const GradeSection = ({ courseCode, instructor }) => {
   const sortedSemesters = Object.values(semesterGroups).sort((a, b) => b.period.localeCompare(a.period));
 
   return (
-    <div className="border-t border-slate-100 mt-3">
+    <div className="mt-4 border-t border-line">
       <button
         onClick={handleToggle}
-        className="w-full py-2 flex items-center justify-between text-sm text-slate-500 hover:text-slate-700 transition-colors"
+        className="flex min-h-11 w-full items-center justify-between py-2 text-xs font-medium text-muted transition-colors hover:text-ink"
       >
         <span className="flex items-center gap-1.5">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,64 +225,58 @@ const CourseCard = ({ course, onTrack, isTracking, isTracked }) => {
   const isUntracked = course.seats_remaining === 999;
 
   const getStatusStyles = () => {
-    if (isUntracked) return { bg: 'bg-slate-100', text: 'text-slate-500', label: 'Untracked' };
-    if (course.seats_remaining > 5) return { bg: 'bg-emerald-500', text: 'text-white', label: 'Available' };
-    if (course.seats_remaining > 0) return { bg: 'bg-amber-500', text: 'text-white', label: 'Limited' };
-    return { bg: 'bg-slate-400', text: 'text-white', label: 'Full' };
+    if (isUntracked) return { dot: 'bg-purdue-gold', text: 'text-muted', label: 'Availability not checked' };
+    if (course.seats_remaining > 5) return { dot: 'bg-available', text: 'text-available', label: `${course.seats_remaining} seats available` };
+    if (course.seats_remaining > 0) return { dot: 'bg-limited', text: 'text-limited', label: `${course.seats_remaining} ${course.seats_remaining === 1 ? 'seat' : 'seats'} left` };
+    return { dot: 'bg-muted', text: 'text-muted', label: 'Full' };
   };
 
   const status = getStatusStyles();
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 transition-all hover:shadow-md">
-      {/* Header with status */}
-      <div className={`${status.bg} px-4 py-2 flex justify-between items-center`}>
-        <span className={`text-sm font-medium ${status.text}`}>{status.label}</span>
-        {!isUntracked && (
-          <span className={`text-sm font-bold ${status.text}`}>
-            {Math.max(0, course.seats_remaining)}/{course.seats_capacity}
-          </span>
-        )}
+    <article className="surface flex h-full flex-col p-4 transition-colors hover:border-slate-400 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line pb-3">
+        <span className={`flex items-center gap-2 text-xs font-medium ${status.text}`}><span className={`status-dot ${status.dot}`} />{status.label}</span>
+        {!isUntracked && <span className="font-mono text-[11px] text-muted">{Math.max(0, course.seats_remaining)} / {course.seats_capacity} seats</span>}
       </div>
 
-      {/* Content */}
-      <div className="p-4">
+      <div className="flex flex-1 flex-col pt-4">
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-lg font-semibold text-slate-800">{course.course_code}</h3>
+            <h3 className="font-display text-xl font-medium text-ink">{course.course_code}</h3>
             {course.schedule_type && (
-              <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
+              <span className="rounded border border-line bg-paper px-2 py-0.5 text-[11px] font-medium text-muted">
                 {course.schedule_type}
               </span>
             )}
           </div>
-          <p className="text-slate-600 text-sm line-clamp-1">{course.title}</p>
+          <p className="line-clamp-2 text-sm leading-5 text-muted">{course.title}</p>
         </div>
 
-        <div className="space-y-1.5 text-sm mb-4">
+        <dl className="mb-4 space-y-2 text-xs">
           <div className="flex">
-            <span className="text-slate-400 w-20">Term</span>
-            <span className="text-slate-700">{course.term_name || course.term_code}</span>
+            <dt className="w-20 text-muted">Term</dt>
+            <dd className="text-ink">{course.term_name || course.term_code}</dd>
           </div>
           <div className="flex">
-            <span className="text-slate-400 w-20">CRN</span>
-            <span className="text-slate-700 font-mono">{course.crn}</span>
+            <dt className="w-20 text-muted">CRN</dt>
+            <dd className="font-mono text-ink">{course.crn}</dd>
           </div>
           {course.section && (
             <div className="flex">
-              <span className="text-slate-400 w-20">Section</span>
-              <span className="text-slate-700 font-mono">{course.section}</span>
+              <dt className="w-20 text-muted">Section</dt>
+              <dd className="font-mono text-ink">{course.section}</dd>
             </div>
           )}
           <div className="flex">
-            <span className="text-slate-400 w-20">Time</span>
-            <span className="text-slate-700">{course.time || 'TBA'} {course.days && `(${course.days})`}</span>
+            <dt className="w-20 text-muted">Time</dt>
+            <dd className="text-ink">{course.time || 'TBA'} {course.days && `(${course.days})`}</dd>
           </div>
           <div className="flex">
-            <span className="text-slate-400 w-20">Instructor</span>
-            <span className="text-slate-700 truncate">{course.instructor || 'TBA'}</span>
+            <dt className="w-20 text-muted">Instructor</dt>
+            <dd className="truncate text-ink">{course.instructor || 'TBA'}</dd>
           </div>
-        </div>
+        </dl>
 
         {/* Grade Distribution Section - Only show for Lecture sections */}
         {course.schedule_type === 'Lecture' && (
@@ -292,17 +286,17 @@ const CourseCard = ({ course, onTrack, isTracking, isTracked }) => {
         <button
           onClick={() => onTrack(course)}
           disabled={isTracking || isTracked}
-          className={`w-full py-2.5 rounded-lg font-medium text-sm transition-colors mt-3 ${isTracked
-            ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+          className={`mt-auto min-h-11 w-full rounded-lg border px-4 py-2.5 text-sm font-semibold transition-colors ${isTracked
+            ? 'cursor-not-allowed border-purdue-gold bg-paper text-deep-gold'
             : isTracking
-              ? 'bg-slate-200 text-slate-500 cursor-wait'
-              : 'bg-slate-800 text-white hover:bg-slate-700'
+              ? 'cursor-wait border-line bg-paper text-muted'
+              : 'border-ink bg-canvas text-ink hover:bg-paper'
             }`}
         >
-          {isTracking ? 'Adding...' : isTracked ? 'Tracking' : 'Track Course'}
+          {isTracking ? 'Adding…' : isTracked ? 'Watching' : 'Watch this section'}
         </button>
       </div>
-    </div>
+    </article>
   );
 };
 

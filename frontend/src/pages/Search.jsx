@@ -177,36 +177,38 @@ const Search = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+    <div className="page-shell">
+      <div className="page-container">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Search Courses</h1>
-          <p className="text-slate-500 text-sm sm:text-base mt-1">Find courses by subject, code, or CRN</p>
+        <div className="mb-7 border-b border-line pb-7">
+          <p className="eyebrow mb-2">Fall 2026 catalog</p>
+          <h1 className="section-title">Find a section</h1>
+          <p className="mt-2 text-sm text-muted">Search by subject, course number, or CRN. Each result is an individual section.</p>
         </div>
 
         {/* Search */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 mb-6">
+        <div className="sticky top-16 z-30 -mx-5 mb-7 border-b border-line bg-canvas/95 px-5 py-4 backdrop-blur sm:static sm:mx-0 sm:rounded-lg sm:border sm:p-5">
           <form onSubmit={handleSearch}>
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex-1 relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <input
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search courses..."
-                  className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent text-base"
+                  placeholder="CS 18000 or 12345"
+                  className="input-field pl-10 text-base"
+                  aria-label="Search courses"
                 />
               </div>
               <button
                 type="submit"
                 disabled={loading || !query.trim()}
-                className="bg-slate-800 text-white px-6 py-3 rounded-lg font-medium hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary px-7"
               >
-                {loading ? 'Searching...' : 'Search'}
+                {loading ? 'Searching…' : 'Search'}
               </button>
             </div>
           </form>
@@ -217,24 +219,24 @@ const Search = () => {
           <div className="mb-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
-                <h2 className="text-lg font-semibold text-slate-800">
+                  <h2 className="font-display text-xl font-medium text-ink">
                   {filteredCourses.length} {filteredCourses.length === 1 ? 'result' : 'results'}
                   {courses.length !== filteredCourses.length && (
-                    <span className="text-slate-500 font-normal text-sm ml-2">
+                    <span className="ml-2 font-sans text-sm font-normal text-muted">
                       (filtered from {courses.length})
                     </span>
                   )}
                 </h2>
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="text-sm text-slate-600 hover:text-slate-800 flex items-center gap-1 font-medium bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 transition-all"
+                  className="flex min-h-10 items-center gap-1 rounded-lg border border-line bg-canvas px-3 py-1.5 text-sm font-medium text-muted transition-all hover:border-slate-400 hover:text-ink"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                   </svg>
                   {showFilters ? 'Hide Filters' : 'Show Filters'}
                   {(selectedDays.size > 0 || selectedTypes.size > 0) && (
-                    <span className="bg-slate-800 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-ink text-xs text-canvas">
                       {selectedDays.size + selectedTypes.size}
                     </span>
                   )}
@@ -244,11 +246,11 @@ const Search = () => {
 
             {/* Expandable Filter Panel */}
             {showFilters && (
-              <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6 mb-6 animate-in slide-in-from-top-2 duration-200">
+              <div className="surface mb-6 p-4 sm:p-6">
                 <div className="grid sm:grid-cols-2 gap-6">
                   {/* Day Filter */}
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-700 mb-3">Day of Week</h3>
+                    <h3 className="mb-3 text-sm font-semibold text-ink">Day of week</h3>
                     <div className="flex flex-wrap gap-2">
                       {DAYS_MAP.map(day => {
                         const isSelected = selectedDays.has(day.value);
@@ -257,8 +259,8 @@ const Search = () => {
                             key={day.value}
                             onClick={() => toggleDay(day.value)}
                             className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${isSelected
-                              ? 'bg-slate-800 text-white border-slate-800'
-                              : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                              ? 'border-ink bg-ink text-canvas'
+                              : 'border-line bg-canvas text-muted hover:border-slate-400 hover:bg-paper'
                               }`}
                           >
                             {day.label}
@@ -270,7 +272,7 @@ const Search = () => {
 
                   {/* Type Filter */}
                   <div>
-                    <h3 className="text-sm font-semibold text-slate-700 mb-3">Class Type</h3>
+                    <h3 className="mb-3 text-sm font-semibold text-ink">Class type</h3>
                     {availableTypes.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {availableTypes.map(type => {
@@ -280,8 +282,8 @@ const Search = () => {
                               key={type}
                               onClick={() => toggleType(type)}
                               className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${isSelected
-                                ? 'bg-slate-800 text-white border-slate-800'
-                                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                ? 'border-ink bg-ink text-canvas'
+                                : 'border-line bg-canvas text-muted hover:border-slate-400 hover:bg-paper'
                                 }`}
                             >
                               {type}
@@ -297,7 +299,7 @@ const Search = () => {
 
                 {/* Clear Filters */}
                 {(selectedDays.size > 0 || selectedTypes.size > 0) && (
-                  <div className="mt-4 pt-4 border-t border-slate-100 flex justify-end">
+                  <div className="mt-4 flex justify-end border-t border-line pt-4">
                     <button
                       onClick={() => {
                         setSelectedDays(new Set());
@@ -305,7 +307,7 @@ const Search = () => {
                       }}
                       className="text-sm text-red-600 hover:text-red-700 font-medium"
                     >
-                      Clear All Filters
+                      Clear all filters
                     </button>
                   </div>
                 )}
@@ -316,7 +318,7 @@ const Search = () => {
 
         {/* Error */}
         {error && (
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-6 text-sm">
+          <div role="status" className="mb-6 rounded-md border border-line border-l-[3px] border-l-limited bg-canvas px-4 py-3 text-sm text-limited">
             {error}. Try searching by subject code (CS, MA), course number (CS 18000), or CRN.
           </div>
         )}
@@ -324,13 +326,13 @@ const Search = () => {
         {/* Loading */}
         {loading && (
           <div className="flex items-center justify-center py-16">
-            <div className="w-6 h-6 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-line border-t-ink" aria-label="Searching" />
           </div>
         )}
 
         {/* Results */}
         {!loading && filteredCourses.length > 0 && (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCourses.map(course => (
               <CourseCard
                 key={`${course.term_code}:${course.crn}`}
@@ -344,14 +346,14 @@ const Search = () => {
         )}
 
         {!loading && searched && filteredCourses.length === 0 && courses.length > 0 && (
-          <div className="text-center py-12">
-            <p className="text-slate-500">No courses match your active filters.</p>
+          <div className="surface py-12 text-center">
+            <p className="font-display text-xl font-medium">No sections match those filters.</p>
             <button
               onClick={() => {
                 setSelectedDays(new Set());
                 setSelectedTypes(new Set());
               }}
-              className="text-slate-800 font-medium mt-2 hover:underline"
+              className="mt-3 text-sm font-semibold text-ink underline decoration-purdue-gold decoration-2 underline-offset-4"
             >
               Clear filters
             </button>
@@ -360,15 +362,11 @@ const Search = () => {
 
         {/* Initial state */}
         {!loading && !searched && (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 sm:p-12 text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-semibold text-slate-800 mb-2">Search for courses</h2>
-            <p className="text-slate-500 text-sm max-w-sm mx-auto">
-              Enter a subject code, course number, or CRN to find courses
+          <div className="surface px-8 py-14 text-center sm:px-12 sm:py-16">
+            <p className="eyebrow mb-3">Start with what you know</p>
+            <h2 className="font-display text-2xl font-medium text-ink">Search the course catalog.</h2>
+            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-muted">
+              Try a subject like CS, a course like MA 26100, or the five-digit CRN.
             </p>
           </div>
         )}
