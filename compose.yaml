@@ -1,0 +1,107 @@
+x-backend-environment: &backend-environment
+  DATABASE_URL: "postgresql://${POSTGRES_USER:-boilersnipe}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-boilersnipe}"
+  SECRET_KEY: "${SECRET_KEY:?Set SECRET_KEY}"
+  ALGORITHM: "${ALGORITHM:-HS256}"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "${ACCESS_TOKEN_EXPIRE_MINUTES:-10080}"
+  GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID}"
+  RESEND_API_KEY: "${RESEND_API_KEY:?Set RESEND_API_KEY}"
+  FRONTEND_URL: "${FRONTEND_URL:-https://boilersnipe.com}"
+  ALLOWED_HOSTS: "${ALLOWED_HOSTS:-boilersnipe.com}"
+  PROXY_URL: "${PROXY_URL:-}"
+  SNIPER_INTERVAL_MINUTES: "${SNIPER_INTERVAL_MINUTES:-5}"
+  INVENTORY_CRON: "${INVENTORY_CRON:-0 2 * * 0}"
+  CURRENT_TERM_CODE: "${CURRENT_TERM_CODE:-202710}"
+  CURRENT_TERM_NAME: "${CURRENT_TERM_NAME:-Fall 2026}"
+  RUN_STARTUP_INVENTORY_ONCE: "${RUN_STARTUP_INVENTORY_ONCE:-false}"
+  ENABLE_RECURRING_INVENTORY: "${ENABLE_RECURRING_INVENTORY:-true}"
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-boilersnipe}"
+      POSTGRES_USER: "${POSTGRES_USER:-boilersnipe}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}"
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - app_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *backend-environment
+      PORT: "8080"
+    expose:
+      - "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/api/health', timeout=5)"
+      interval: 15s
+      timeout: 8s
+      retries: 5
+      start_period: 30s
+    networks:
+      - app_network
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ["python", "-m", "workers.scheduler"]
+    environment:
+      <<: *backend-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID}"
+    restart: unless-stopped
+    environment:
+      PORT: "80"
+      BACKEND_URL: "http://backend:8080"
+    expose:
+      - "80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+
+networks:
+  app_network:
