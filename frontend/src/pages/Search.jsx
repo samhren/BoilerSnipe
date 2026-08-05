@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { coursesAPI, tracksAPI } from '../services/api';
-import rybbit from '../services/rybbit';
 import CourseCard from '../components/CourseCard';
 
 const DAYS_MAP = [
@@ -81,12 +80,6 @@ const Search = () => {
       if (response.data.length === 0) {
         setError('No courses found');
       }
-
-      rybbit.track('Course Search', {
-        query: q,
-        count: response.data.length,
-        has_results: response.data.length > 0
-      });
     } catch (err) {
       setError('Failed to search courses');
       console.error(err);
@@ -120,7 +113,6 @@ const Search = () => {
       });
       setTrackedCRNs(new Set([...trackedCRNs, trackKey]));
       console.log('Tracked Course:', { crn: course.crn, term_code: course.term_code });
-      rybbit.track('Track Course', { crn: course.crn, term_code: course.term_code });
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to track course');
       console.error(err);
