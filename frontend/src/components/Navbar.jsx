@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import rybbit from '../services/rybbit';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -10,18 +9,8 @@ const Navbar = () => {
 
   const isActive = (path) => location.pathname === path;
 
-  const handleNavClick = (destination) => {
-    rybbit.track('Navigation Click', {
-      destination,
-      from: location.pathname,
-      is_authenticated: !!user,
-    });
-  };
-
   const handleMobileMenuToggle = () => {
-    const newState = !menuOpen;
-    setMenuOpen(newState);
-    rybbit.track('Mobile Menu Toggle', { opened: newState });
+    setMenuOpen(!menuOpen);
   };
 
   return (
@@ -29,7 +18,7 @@ const Navbar = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-14">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2" onClick={() => { setMenuOpen(false); handleNavClick('/'); }}>
+          <Link to="/" className="flex items-center gap-2" onClick={() => setMenuOpen(false)}>
             <span className="text-xl">🎯</span>
             <span className="font-bold text-lg">BoilerSnipe</span>
           </Link>
@@ -40,7 +29,6 @@ const Navbar = () => {
               <>
                 <Link
                   to="/dashboard"
-                  onClick={() => handleNavClick('/dashboard')}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive('/dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
                     }`}
                 >
@@ -48,7 +36,6 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/search"
-                  onClick={() => handleNavClick('/search')}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive('/search') ? 'bg-slate-800 text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800'
                     }`}
                 >
@@ -67,14 +54,12 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
-                  onClick={() => handleNavClick('/login')}
                   className="px-3 py-2 text-sm text-slate-300 hover:text-white transition-colors"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  onClick={() => handleNavClick('/register')}
                   className="px-4 py-2 bg-amber-500 text-slate-900 rounded-lg text-sm font-semibold hover:bg-amber-400 transition-colors"
                 >
                   Sign Up
@@ -105,7 +90,7 @@ const Navbar = () => {
               <>
                 <Link
                   to="/dashboard"
-                  onClick={() => { setMenuOpen(false); handleNavClick('/dashboard'); }}
+                  onClick={() => setMenuOpen(false)}
                   className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/dashboard') ? 'bg-slate-800 text-white' : 'text-slate-300'
                     }`}
                 >
@@ -113,7 +98,7 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/search"
-                  onClick={() => { setMenuOpen(false); handleNavClick('/search'); }}
+                  onClick={() => setMenuOpen(false)}
                   className={`block px-3 py-2 rounded-lg text-sm font-medium ${isActive('/search') ? 'bg-slate-800 text-white' : 'text-slate-300'
                     }`}
                 >
@@ -132,14 +117,14 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
-                  onClick={() => { setMenuOpen(false); handleNavClick('/login'); }}
+                  onClick={() => setMenuOpen(false)}
                   className="block px-3 py-2 text-sm text-slate-300"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  onClick={() => { setMenuOpen(false); handleNavClick('/register'); }}
+                  onClick={() => setMenuOpen(false)}
                   className="block px-3 py-2 text-sm font-semibold text-amber-500"
                 >
                   Sign Up
