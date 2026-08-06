@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import rybbit from '../services/rybbit';
 
 import { GoogleLogin } from '@react-oauth/google';
 
@@ -46,6 +47,7 @@ const Register = () => {
     });
 
     if (result.success) {
+      rybbit.event('signup_completed', { method: 'email' });
       navigate('/dashboard');
     } else {
       setError(result.error);
@@ -70,6 +72,7 @@ const Register = () => {
                   setLoading(true);
                   const result = await googleLogin(credentialResponse.credential);
                   if (result.success) {
+                    rybbit.event('signup_completed', { method: 'google' });
                     navigate('/dashboard');
                   } else {
                     setError(result.error);

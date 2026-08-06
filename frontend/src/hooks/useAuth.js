@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
+import rybbit from '../services/rybbit';
 
 const AuthContext = createContext(null);
 
@@ -21,6 +22,7 @@ export const AuthProvider = ({ children }) => {
         .then(response => {
           setUser(response.data);
           localStorage.setItem('user', JSON.stringify(response.data));
+          rybbit.identify(response.data.id, response.data.email);
         })
         .catch(() => {
           logout();
@@ -46,6 +48,7 @@ export const AuthProvider = ({ children }) => {
 
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+      rybbit.identify(userData.id, userData.email);
 
       return { success: true };
     } catch (error) {
@@ -70,6 +73,7 @@ export const AuthProvider = ({ children }) => {
 
       setUser(userData);
       localStorage.setItem('user', JSON.stringify(userData));
+      rybbit.identify(userData.id, userData.email);
 
       return { success: true };
     } catch (error) {
@@ -97,6 +101,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    rybbit.clearUserId();
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setUser(null);

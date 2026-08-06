@@ -15,6 +15,7 @@ const Privacy = () => {
             <ul className="list-disc list-outside space-y-1 pl-5">
               <li><strong>Account Information:</strong> Your email address, plus a password if you register with one. If you use "Sign in with Google," we receive your email address from Google and never see or store your Google password.</li>
               <li><strong>Course Tracking Data:</strong> Which courses you choose to track and your notification preferences</li>
+              <li><strong>Usage and Diagnostic Data:</strong> Pages visited, referral and device information, approximate location, selected feature actions, and JavaScript errors. When you are signed in, we associate this data with your account ID and email address.</li>
             </ul>
             <p className="mt-2">
               For details on the Purdue course data we read and how we read it, see our{' '}
@@ -30,6 +31,7 @@ const Privacy = () => {
             <ul className="list-disc list-outside space-y-1 pl-5">
               <li>To provide course availability notifications via email</li>
               <li>To authenticate your account and maintain security</li>
+              <li>To understand feature usage and diagnose technical problems</li>
               <li>To communicate important service updates</li>
             </ul>
           </section>
@@ -40,6 +42,7 @@ const Privacy = () => {
             <ul className="list-disc list-outside space-y-1 pl-5">
               <li><strong>Resend:</strong> For sending email notifications</li>
               <li><strong>Google:</strong> For "Sign in with Google," if you choose to use it</li>
+              <li><strong>Rybbit:</strong> For analytics and error monitoring. Rybbit receives usage data, your account ID, and your email address when you are signed in.</li>
               <li><strong>Railway:</strong> For hosting our service</li>
             </ul>
             <p className="mt-2">These services have their own privacy policies governing their use of your data. We do not sell your data or share it with advertisers.</p>
@@ -89,8 +92,8 @@ const Privacy = () => {
             <h2 className="text-xl font-semibold text-slate-800 mb-3">7. Cookies and Local Storage</h2>
             <p>
               We store your authentication token and basic account details in your browser's
-              localStorage so you stay signed in. We do not use analytics, advertising, or
-              tracking cookies.
+              localStorage so you stay signed in. Rybbit also stores your analytics user ID in
+              localStorage after you sign in. We do not use advertising or analytics cookies.
             </p>
           </section>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { coursesAPI, tracksAPI } from '../services/api';
+import rybbit from '../services/rybbit';
 import CourseCard from '../components/CourseCard';
 
 const DAYS_MAP = [
@@ -12,6 +13,14 @@ const DAYS_MAP = [
   { label: 'Sat', value: 'S' },
   { label: 'Sun', value: 'U' },
 ];
+
+const getQueryType = (query) => {
+  const normalized = query.trim();
+  if (/^\d{5}$/.test(normalized)) return 'crn';
+  if (/^[a-zA-Z]{2,6}$/.test(normalized)) return 'subject';
+  if (/^[a-zA-Z]{2,6}[\s-]*\d+$/.test(normalized)) return 'course_code';
+  return 'text';
+};
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -80,6 +89,13 @@ const Search = () => {
       if (response.data.length === 0) {
         setError('No courses found');
       }
+
+      rybbit.event('course_search', {
+        query_type: getQueryType(q),
+        result_count: response.data.length,
+        day_filter_count: selectedDays.size,
+        type_filter_count: selectedTypes.size,
+      });
     } catch (err) {
       setError('Failed to search courses');
       console.error(err);
@@ -112,7 +128,11 @@ const Search = () => {
         notify_on_close: false
       });
       setTrackedCRNs(new Set([...trackedCRNs, trackKey]));
-      console.log('Tracked Course:', { crn: course.crn, term_code: course.term_code });
+      rybbit.event('course_tracking_started', {
+        course_code: course.course_code,
+        term_code: course.term_code,
+        schedule_type: course.schedule_type || 'unknown',
+      });
     } catch (err) {
       alert(err.response?.data?.detail || 'Failed to track course');
       console.error(err);

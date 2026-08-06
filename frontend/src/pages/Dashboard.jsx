@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { tracksAPI } from '../services/api';
+import rybbit from '../services/rybbit';
 import TrackCard from '../components/TrackCard';
 import WeeklySchedule from '../components/WeeklySchedule';
 
@@ -35,9 +36,17 @@ const Dashboard = () => {
       return;
     }
 
+    const track = tracks.find(t => t.id === trackId);
+
     try {
       await tracksAPI.delete(trackId);
       setTracks(tracks.filter(t => t.id !== trackId));
+      if (track) {
+        rybbit.event('course_tracking_stopped', {
+          course_code: track.course.course_code,
+          term_code: track.course.term_code,
+        });
+      }
     } catch (err) {
       alert('Failed to remove course');
       console.error(err);
@@ -45,11 +54,20 @@ const Dashboard = () => {
   };
 
   const handleUpdate = async (trackId, updateData) => {
+    const track = tracks.find(t => t.id === trackId);
+
     try {
       const response = await tracksAPI.update(trackId, updateData);
       setTracks(tracks.map(t => t.id === trackId ? response.data : t));
+      const [preference, enabled] = Object.entries(updateData)[0] || [];
+      if (track && preference) {
+        rybbit.event('notification_preference_changed', {
+          course_code: track.course.course_code,
+          preference,
+          enabled,
+        });
+      }
     } catch (err) {
-      alert('Failed to update settings');
       alert('Failed to update settings');
       console.error(err);
     }
