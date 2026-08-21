@@ -34,7 +34,7 @@ services:
       retries: 10
       start_period: 20s
 
-  backend:
+  boilersnipe-backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -79,11 +79,11 @@ services:
     restart: unless-stopped
     environment:
       PORT: "80"
-      BACKEND_URL: "http://backend:8080"
+      BACKEND_URL: "http://boilersnipe-backend:8080"
     expose:
       - "80"
     depends_on:
-      backend:
+      boilersnipe-backend:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
