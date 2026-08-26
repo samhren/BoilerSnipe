@@ -49,6 +49,21 @@ class Settings(BaseSettings):
     # Scraper settings
     INVENTORY_CRON: str = "0 2 * * 0"  # Weekly on Sunday at 2 AM
     SNIPER_INTERVAL_MINUTES: float = 5
+
+    # Sniper rate-limit resilience. Purdue throttles by IP and answers with an
+    # HTTP 200 "too many requests" page, so pacing and backing off is the only
+    # way to stay under the threshold and to recover once we cross it.
+    # Delay inserted between consecutive course-detail requests.
+    SNIPER_REQUEST_DELAY_SECONDS: float = 0.75
+    # Consecutive blocked/network failures before a cycle aborts the rest of
+    # its work instead of firing hundreds more requests into an active block.
+    SNIPER_MAX_CONSECUTIVE_FAILURES: int = 5
+    # Ceiling for the exponential backoff applied after the breaker trips.
+    SNIPER_BACKOFF_MAX_MINUTES: float = 60
+    # Requests one cycle may issue. At the 0.75s default delay plus ~0.3s per
+    # request, 250 courses take ~4.4 minutes, which fits inside the 5-minute
+    # interval with headroom. Courses past the budget roll to the next cycle.
+    SNIPER_MAX_REQUESTS_PER_CYCLE: int = 250
     CURRENT_TERM_CODE: str = "202710"
     CURRENT_TERM_NAME: str = "Fall 2026"
     INVENTORY_SUBJECTS: str = ",".join(DEFAULT_INVENTORY_SUBJECTS)

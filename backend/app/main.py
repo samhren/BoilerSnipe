@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, func
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy.orm import Session
 from typing import List
@@ -439,9 +439,10 @@ def create_track(
             from workers.sniper import SeatSniper
             # Run sniper check
             sniper = SeatSniper()
-            seat_data = sniper.check_seat_availability(course.crn, course.term_code)
-            
-            if seat_data:
+            result = sniper.check_seat_availability(course.crn, course.term_code)
+
+            if result.ok:
+                seat_data = result.data
                 # Update course in our session
                 course.seats_capacity = seat_data['seats_capacity']
                 course.seats_available = seat_data['seats_available']
@@ -453,6 +454,12 @@ def create_track(
                 
                 db.commit()
             
+            else:
+                print(
+                    f"Seat check for new track on CRN {course.crn} returned "
+                    f"{result.status.value}: {result.detail}"
+                )
+
             sniper.close()
             db.refresh(course)
             db.refresh(new_track)
@@ -528,6 +535,36 @@ def delete_track(
 
 # Health check
 @app.get("/api/health")
-def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "service": "boilersnipe"}
+def health_check(db: Session = Depends(get_db)):
+    """Health check endpoint.
+
+    Reports how long ago the sniper last wrote a successful seat check. The API
+    and worker run as separate processes, so the shared database is the only
+    place that age is visible from here - and it is the signal that would have
+    surfaced the 2026-08-25 outage within minutes instead of a day.
+    """
+    last_checked = db.query(func.max(models.Course.last_checked)).filter(
+        models.Course.term_code == settings.CURRENT_TERM_CODE,
+        models.Course.is_listed == True
+    ).scalar()
+
+    age_seconds = None
+    if last_checked is not None:
+        now = datetime.now(last_checked.tzinfo)
+        age_seconds = max(0.0, (now - last_checked).total_seconds())
+
+    # Stale once we have missed several sniper intervals, not just one, so a
+    # single slow or backed-off cycle does not flap the health signal.
+    stale_after = settings.SNIPER_INTERVAL_MINUTES * 60 * 4
+    sniper_healthy = age_seconds is not None and age_seconds <= stale_after
+
+    return {
+        "status": "healthy",
+        "service": "boilersnipe",
+        "sniper": {
+            "healthy": sniper_healthy,
+            "last_successful_check": last_checked.isoformat() if last_checked else None,
+            "last_successful_check_age_seconds": age_seconds,
+            "stale_after_seconds": stale_after,
+        },
+    }
