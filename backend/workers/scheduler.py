@@ -2,6 +2,7 @@
 Background job scheduler for running workers
 """
 
+import logging
 import sys
 from pathlib import Path
 from apscheduler.schedulers.blocking import BlockingScheduler
@@ -67,8 +68,25 @@ def run_startup_scrape_once():
         print(f"Warning: Startup scrape failed: {e}", flush=True)
 
 
+def configure_logging():
+    """Send worker logs to stdout.
+
+    The sniper reports blocks, breaker trips and dead cycles through the
+    `logging` module. Without this the root logger defaults to WARNING with no
+    handler, and those lines would be exactly as invisible as the bare
+    "Failed to check seats" prints they replaced.
+    """
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        stream=sys.stdout,
+        force=True,
+    )
+
+
 def start_scheduler():
     """Start the background job scheduler"""
+    configure_logging()
     init_db()
     migrate()
 
