@@ -43,6 +43,17 @@ def block_page_html() -> str:
     return load_fixture("block_page.html")
 
 
+@pytest.fixture
+def section_gone_html() -> str:
+    """A cancelled section's detail page, captured 2026-08-27 for CRN 24805.
+
+    7,085 bytes, no Registration Availability table, and an errortext span
+    reading "No detailed class information found". CRNs 12076, 31469 and 14330
+    returned byte-identical pages.
+    """
+    return load_fixture("section_gone.html")
+
+
 @pytest.fixture(autouse=True)
 def reset_sniper_state():
     """Backoff and rotation live at module scope, so tests must not inherit them."""

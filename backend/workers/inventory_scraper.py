@@ -355,7 +355,11 @@ class InventoryScraper:
                     # Update existing course
                     for key, value in course_data.items():
                         setattr(existing_course, key, value)
+                    # Seeing it in the catalog again clears any cancellation the
+                    # sniper recorded, so the UI stops badging it.
                     existing_course.is_listed = True
+                    existing_course.delisted_at = None
+                    existing_course.section_gone_streak = 0
                 else:
                     # Create new course
                     new_course = Course(**course_data, is_listed=True)
@@ -376,8 +380,19 @@ class InventoryScraper:
                 Course.course_code.like(f"{subject} %")
             ).all()
 
+            now = datetime.now()
             for course in existing_courses:
-                course.is_listed = course.crn in seen_crns
+                still_listed = course.crn in seen_crns
+                if still_listed:
+                    course.delisted_at = None
+                    course.section_gone_streak = 0
+                elif course.is_listed:
+                    # Dropping out of the catalog is the same user-visible event
+                    # as the sniper confirming a cancellation, so stamp it the
+                    # same way - otherwise the UI badges the section with no
+                    # date to show for it.
+                    course.delisted_at = now
+                course.is_listed = still_listed
 
             self.db.commit()
         except Exception as e:
