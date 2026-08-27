@@ -48,6 +48,41 @@ def _ensure_app_state_table() -> None:
         connection.execute(text(statement))
 
 
+# The cancelled-section columns. Both dialects support plain ADD COLUMN with a
+# constant default, so these never need a table rebuild. The four CRNs that
+# were silently dead as of 2026-08-27 (24805, 12076, 31469, 14330) get picked
+# up by the first sweep after deploy - `section_gone_streak` starts at 0 and
+# climbs on its own, so there is nothing to backfill.
+COURSE_CANCELLATION_COLUMNS = {
+    "section_gone_streak": {
+        "sqlite": "INTEGER NOT NULL DEFAULT 0",
+        "postgres": "INTEGER NOT NULL DEFAULT 0",
+    },
+    "delisted_at": {
+        "sqlite": "DATETIME",
+        "postgres": "TIMESTAMP WITH TIME ZONE",
+    },
+}
+
+
+def _ensure_course_cancellation_columns() -> None:
+    inspector = inspect(engine)
+    if "courses" not in inspector.get_table_names():
+        return
+
+    dialect = "sqlite" if engine.dialect.name == "sqlite" else "postgres"
+    columns = _column_names(inspector, "courses")
+
+    with engine.begin() as connection:
+        for name, types in COURSE_CANCELLATION_COLUMNS.items():
+            if name in columns:
+                continue
+            logger.info("Adding missing column '%s' to 'courses' table...", name)
+            connection.execute(
+                text(f"ALTER TABLE courses ADD COLUMN {name} {types[dialect]}")
+            )
+
+
 def _sqlite_courses_need_rebuild(inspector) -> bool:
     if "courses" not in inspector.get_table_names():
         return False
@@ -79,7 +114,8 @@ def _rebuild_sqlite_courses_table() -> None:
     insert_sql = f"""
         INSERT INTO courses_new (
             id, crn, course_code, title, instructor, time, days, schedule_type,
-            term_code, term_name, section, is_listed, seats_available, seats_capacity,
+            term_code, term_name, section, is_listed, section_gone_streak,
+            delisted_at, seats_available, seats_capacity,
             seats_remaining, last_checked, created_at, updated_at
         )
         SELECT
@@ -95,6 +131,8 @@ def _rebuild_sqlite_courses_table() -> None:
             term_name,
             {existing_or_default("section", "NULL")},
             {existing_or_default("is_listed", "1")},
+            {existing_or_default("section_gone_streak", "0")},
+            {existing_or_default("delisted_at", "NULL")},
             seats_available,
             seats_capacity,
             seats_remaining,
@@ -121,6 +159,8 @@ def _rebuild_sqlite_courses_table() -> None:
         term_name VARCHAR,
         section VARCHAR,
         is_listed BOOLEAN NOT NULL DEFAULT 1,
+        section_gone_streak INTEGER NOT NULL DEFAULT 0,
+        delisted_at DATETIME,
         seats_available INTEGER,
         seats_capacity INTEGER,
         seats_remaining INTEGER,
@@ -197,6 +237,8 @@ def migrate() -> None:
         _migrate_sqlite()
     else:
         _migrate_postgres()
+
+    _ensure_course_cancellation_columns()
 
     logger.info("Database migration check complete.")
 

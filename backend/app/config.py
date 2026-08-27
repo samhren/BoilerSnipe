@@ -48,22 +48,45 @@ class Settings(BaseSettings):
 
     # Scraper settings
     INVENTORY_CRON: str = "0 2 * * 0"  # Weekly on Sunday at 2 AM
-    SNIPER_INTERVAL_MINUTES: float = 5
 
-    # Sniper rate-limit resilience. Purdue throttles by IP and answers with an
-    # HTTP 200 "too many requests" page, so pacing and backing off is the only
-    # way to stay under the threshold and to recover once we cross it.
-    # Delay inserted between consecutive course-detail requests.
-    SNIPER_REQUEST_DELAY_SECONDS: float = 0.75
-    # Consecutive blocked/network failures before a cycle aborts the rest of
-    # its work instead of firing hundreds more requests into an active block.
+    # Sniper rate-limit resilience.
+    #
+    # Purdue's limiter on selfservice.mypurdue.purdue.edu is a quota, not a
+    # rate: measured 2026-08-27, it allows ~90 requests per ~95-second sliding
+    # window and then serves a 519-byte HTTP 200 "too many requests" page.
+    # Request spacing did not matter; cumulative count did. The limiter is
+    # IP-keyed - a fresh container with a new session and no cookies inherited
+    # the worker's block - and it recovers in ~9-20 seconds once we go idle.
+    #
+    # ~90 per ~95s is a ceiling near 0.95 req/s. We converge on it with AIMD
+    # rather than hardcoding a delay, because the ceiling is undocumented, may
+    # differ per IP, and may change without notice.
+    SNIPER_PACER_START_RATE: float = 0.75
+    SNIPER_PACER_MIN_RATE: float = 0.30
+    SNIPER_PACER_MAX_RATE: float = 0.90
+    # Idle pause after a block, sized to the measured ~9-20s recovery.
+    SNIPER_PACER_RECOVERY_SECONDS: float = 12.0
+    # Multiplicative decrease on a block, additive increase after a clean run.
+    SNIPER_PACER_DECREASE_FACTOR: float = 0.70
+    SNIPER_PACER_INCREASE_STEP: float = 0.02
+    SNIPER_PACER_INCREASE_AFTER: int = 25
+
+    # How often the continuous worker reloads the tracked-course queue, so new
+    # tracks are picked up without restarting the process.
+    SNIPER_COURSE_REFRESH_SECONDS: int = 300
+    # How often delisted courses are rechecked so Purdue can restore them.
+    SNIPER_DELISTED_RECHECK_SECONDS: int = 3600
+    # Consecutive "No detailed class info" reads before a section is treated as
+    # cancelled. Banner returns that page transiently, so one is not enough.
+    SNIPER_SECTION_GONE_THRESHOLD: int = 3
+
+    # Consecutive blocked/network failures before the worker stops walking the
+    # queue instead of firing hundreds more requests into an active block.
     SNIPER_MAX_CONSECUTIVE_FAILURES: int = 5
-    # Ceiling for the exponential backoff applied after the breaker trips.
-    SNIPER_BACKOFF_MAX_MINUTES: float = 60
-    # Requests one cycle may issue. At the 0.75s default delay plus ~0.3s per
-    # request, 250 courses take ~4.4 minutes, which fits inside the 5-minute
-    # interval with headroom. Courses past the budget roll to the next cycle.
-    SNIPER_MAX_REQUESTS_PER_CYCLE: int = 250
+    # Ceiling for the exponential backoff applied after the breaker trips. With
+    # the pacer holding us under the quota, backoff is a safety net rather than
+    # the normal operating mode, so it is measured in seconds.
+    SNIPER_BACKOFF_MAX_SECONDS: float = 300.0
     CURRENT_TERM_CODE: str = "202710"
     CURRENT_TERM_NAME: str = "Fall 2026"
     INVENTORY_SUBJECTS: str = ",".join(DEFAULT_INVENTORY_SUBJECTS)

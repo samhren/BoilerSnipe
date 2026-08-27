@@ -46,6 +46,17 @@ class Course(Base):
     section = Column(String)  # e.g., "003" or "L15"
     is_listed = Column(Boolean, default=True, nullable=False)
 
+    # Cancelled/removed sections. Purdue answers a dead CRN with a ~7 KB page
+    # reading "No detailed class info" instead of the usual 13-16 KB page with
+    # a Registration Availability table. That looks identical to a parse bug,
+    # so before this existed a cancelled section just went quiet forever while
+    # the UI kept showing its last seat numbers as though they were live.
+    # `section_gone_streak` counts consecutive such reads; the section is only
+    # delisted once the streak clears SNIPER_SECTION_GONE_THRESHOLD, because
+    # Banner serves that page transiently.
+    section_gone_streak = Column(Integer, default=0, nullable=False)
+    delisted_at = Column(DateTime(timezone=True), nullable=True)
+
     # Seat information (updated by sniper)
     seats_available = Column(Integer, default=0)
     seats_capacity = Column(Integer, default=0)
@@ -100,7 +111,7 @@ class NotificationLog(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     course_id = Column(Integer, ForeignKey("courses.id"))
 
-    notification_type = Column(String)  # "seat_open", "seat_closed"
+    notification_type = Column(String)  # "seat_open", "seat_closed", "section_cancelled"
     message = Column(String)
     status = Column(String)  # "sent", "failed"
     error_message = Column(String, nullable=True)

@@ -88,8 +88,13 @@ const Dashboard = () => {
     }
   };
 
-  const openSeats = tracks.filter(t => t.course.seats_remaining > 0).length;
-  const closedSeats = tracks.length - openSeats;
+  // A cancelled section has no live seat count, so it must not be tallied as
+  // either available or full - that would put a number the sniper stopped
+  // updating straight into the headline stats.
+  const liveTracks = tracks.filter(t => t.course.is_listed !== false);
+  const cancelledTracks = tracks.filter(t => t.course.is_listed === false);
+  const openSeats = liveTracks.filter(t => t.course.seats_remaining > 0).length;
+  const closedSeats = liveTracks.length - openSeats;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -113,7 +118,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className={`grid ${cancelledTracks.length > 0 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'} gap-3 sm:gap-4 mb-6 sm:mb-8`}>
           <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200">
             <div className="text-2xl sm:text-3xl font-bold text-slate-800">{tracks.length}</div>
             <div className="text-slate-500 text-xs sm:text-sm mt-1">Tracking</div>
@@ -126,12 +131,41 @@ const Dashboard = () => {
             <div className="text-2xl sm:text-3xl font-bold text-slate-400">{closedSeats}</div>
             <div className="text-slate-500 text-xs sm:text-sm mt-1">Full</div>
           </div>
+          {cancelledTracks.length > 0 && (
+            <div className="bg-red-50 rounded-xl p-4 sm:p-5 border border-red-200">
+              <div className="text-2xl sm:text-3xl font-bold text-red-600">{cancelledTracks.length}</div>
+              <div className="text-red-700 text-xs sm:text-sm mt-1">Cancelled</div>
+            </div>
+          )}
         </div>
 
+        {/* Cancelled sections are not being watched at all, so say so once at
+            the top rather than relying on the user to scan every card. */}
+        {!loading && cancelledTracks.length > 0 && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-6 flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4a2 2 0 00-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z" />
+            </svg>
+            <div className="text-sm">
+              <span className="font-semibold text-red-800">
+                {cancelledTracks.length === 1
+                  ? '1 tracked section is no longer offered.'
+                  : `${cancelledTracks.length} tracked sections are no longer offered.`}
+              </span>{' '}
+              <span className="text-red-700">
+                Purdue removed {cancelledTracks.length === 1 ? 'it' : 'them'} from the schedule, so
+                we have stopped checking {cancelledTracks.length === 1 ? 'it' : 'them'} and no alerts
+                will be sent. Remove {cancelledTracks.length === 1 ? 'the track' : 'those tracks'} or
+                find a replacement section below.
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Weekly Schedule */}
-        {!loading && tracks.length > 0 && (
+        {!loading && liveTracks.length > 0 && (
           <WeeklySchedule
-            tracks={tracks}
+            tracks={liveTracks}
             onEventClick={handleEventClick}
           />
         )}

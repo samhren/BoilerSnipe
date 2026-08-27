@@ -62,6 +62,14 @@ class CourseResponse(CourseBase):
     last_checked: Optional[datetime]
     created_at: datetime
 
+    # A cancelled or removed section. `is_listed` goes False once Purdue has
+    # answered several consecutive times with "No detailed class info", and
+    # `delisted_at` records when. The client needs both so it can badge the
+    # section and date the last-known seat numbers instead of presenting them
+    # as live.
+    is_listed: bool = True
+    delisted_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 

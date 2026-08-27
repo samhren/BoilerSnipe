@@ -27,9 +27,11 @@ We do not read, store, or transmit any personal information about any student fr
 
 ## How often we request pages
 
-- **Seat checks** run on a fixed interval, currently every 5 minutes, and only for course sections that at least one signed-in user is actively tracking.
+- **Seat checks** run continuously, but rate-limited to under one request per second, and only for course sections that at least one signed-in user is actively tracking.
   We do not poll the full catalog for seat counts.
-  See `backend/workers/sniper.py` and the `SNIPER_INTERVAL_MINUTES` setting.
+  A single adaptive pacer governs every outbound request: it starts below the rate your servers allow, backs off multiplicatively the moment we see a throttle response, and only creeps back up after a long clean run.
+  If your limits change, we converge on the new ones without a code change on our side.
+  See `backend/workers/sniper.py` and the `SNIPER_PACER_*` settings.
 - **Course listings** for the current term are collected when the background worker starts, and optionally on a weekly schedule, to keep search results current.
   See `backend/workers/inventory_scraper.py` and the `INVENTORY_CRON` setting.
 

@@ -47,7 +47,7 @@ python -m workers.scheduler
 This runs both background jobs:
 
 - **Inventory Scraper**: weekly on Sunday at 2 AM (`INVENTORY_CRON`)
-- **Seat Sniper**: every 5 minutes (`SNIPER_INTERVAL_MINUTES`)
+- **Seat Sniper**: a continuous walk of the tracked-course queue, paced by `SNIPER_PACER_*`
 
 ---
 
@@ -149,13 +149,25 @@ See `backend/.env.example` for the annotated full list.
 
 ```env
 INVENTORY_CRON=0 2 * * 0           # Weekly, Sunday 2 AM
-SNIPER_INTERVAL_MINUTES=5          # Seat checks every 5 minutes
 RUN_STARTUP_INVENTORY_ONCE=true    # One inventory scrape when the worker starts
 ENABLE_RECURRING_INVENTORY=false   # Whether to also honor INVENTORY_CRON
 ```
 
-Be conservative with `SNIPER_INTERVAL_MINUTES`.
-It directly drives request volume against Purdue's servers.
+The seat sniper is not on a schedule. It walks the tracked-course queue
+continuously, and an AIMD pacer decides how fast:
+
+```env
+SNIPER_PACER_START_RATE=0.75       # Requests per second to start at
+SNIPER_PACER_MIN_RATE=0.30         # Floor, never backs off below this
+SNIPER_PACER_MAX_RATE=0.90         # Ceiling, never climbs above this
+SNIPER_PACER_RECOVERY_SECONDS=12   # Idle pause after Purdue throttles us
+SNIPER_COURSE_REFRESH_SECONDS=300  # How often the tracked-course queue reloads
+```
+
+Be conservative with `SNIPER_PACER_MAX_RATE`.
+It directly bounds request volume against Purdue's servers.
+Purdue's measured ceiling is ~90 requests per ~95 seconds per IP, so the 0.90
+default leaves deliberate headroom.
 
 ### Term
 

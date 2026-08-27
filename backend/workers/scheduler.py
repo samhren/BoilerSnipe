@@ -4,10 +4,10 @@ Background job scheduler for running workers
 
 import logging
 import sys
+import threading
 from pathlib import Path
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime
 
 # Add parent directory to path for imports
@@ -17,7 +17,7 @@ from app.config import settings
 from app.database import init_db
 from app.migrate import migrate
 from .inventory_scraper import run_inventory_scraper
-from .sniper import run_sniper
+from .sniper import run_sniper_forever
 
 
 def job_inventory_scraper():
@@ -37,16 +37,23 @@ def job_inventory_scraper():
         return 0
 
 
-def job_seat_sniper():
-    """Wrapper for seat sniper job"""
-    print(f"\n{'='*60}")
-    print(f"SEAT SNIPER JOB - {datetime.now()}")
-    print(f"{'='*60}\n")
+def start_seat_sniper(stop_event: threading.Event) -> threading.Thread:
+    """Run the seat sniper as a continuous background walk.
 
-    try:
-        run_sniper()
-    except Exception as e:
-        print(f"Error in seat sniper job: {str(e)}")
+    The sniper is no longer a scheduled job. A full sweep of the tracked-course
+    queue takes as long as the pacer allows - roughly ten minutes at the
+    measured ceiling - which no fixed trigger interval can express without
+    either overlapping cycles or truncating the sweep. It runs in a thread so
+    the blocking scheduler can still own the inventory cron.
+    """
+    thread = threading.Thread(
+        target=run_sniper_forever,
+        kwargs={"stop_event": stop_event},
+        name="seat-sniper",
+        daemon=True,
+    )
+    thread.start()
+    return thread
 
 
 def run_startup_scrape_once():
@@ -101,22 +108,15 @@ def start_scheduler():
             replace_existing=True
         )
 
-    # Add Seat Sniper job (runs every 5 minutes by default)
-    scheduler.add_job(
-        job_seat_sniper,
-        trigger=IntervalTrigger(minutes=settings.SNIPER_INTERVAL_MINUTES),
-        id='seat_sniper',
-        name='Seat Availability Checker',
-        replace_existing=True
-    )
-
     print("="*60)
     print("BOILERSNIPE - BACKGROUND SCHEDULER")
     print("="*60)
     print(f"\nScheduled Jobs:")
     print(f"  1. Startup Inventory Scraper: {'Enabled' if settings.RUN_STARTUP_INVENTORY_ONCE else 'Disabled'}")
     print(f"  2. Recurring Inventory Scraper: {settings.INVENTORY_CRON if settings.ENABLE_RECURRING_INVENTORY else 'Disabled'}")
-    print(f"  3. Seat Sniper: Every {settings.SNIPER_INTERVAL_MINUTES} minutes")
+    print(f"  3. Seat Sniper: Continuous, paced at {settings.SNIPER_PACER_START_RATE} req/s "
+          f"(adaptive {settings.SNIPER_PACER_MIN_RATE}-{settings.SNIPER_PACER_MAX_RATE}), "
+          f"queue refresh every {settings.SNIPER_COURSE_REFRESH_SECONDS}s")
     print(f"\nScheduler started at {datetime.now()}")
 
     run_startup_scrape_once()
@@ -124,10 +124,16 @@ def start_scheduler():
     print("="*60)
     print("\nPress Ctrl+C to stop\n")
 
+    # Started after the startup scrape so the sniper walks a populated
+    # inventory rather than racing it.
+    sniper_stop = threading.Event()
+    start_seat_sniper(sniper_stop)
+
     try:
         scheduler.start()
     except (KeyboardInterrupt, SystemExit):
         print("\n\nShutting down scheduler...")
+        sniper_stop.set()
         scheduler.shutdown()
         print("Scheduler stopped.")
 

@@ -172,7 +172,6 @@ This project is optimized for deployment on [Railway](https://railway.app/).
    - `SECRET_KEY`: Generate a strong random string.
    - `RESEND_API_KEY`: Your API key from Resend.com.
    - `GOOGLE_CLIENT_ID`: Your Google OAuth Client ID.
-   - `SNIPER_INTERVAL_MINUTES`: `5` (Recommended)
    - `PORT`: `8080` (Railway expects this)
 4. Railway will automatically detect the `Dockerfile` in `/backend` and build it.
 
@@ -221,7 +220,14 @@ It is what gets appended to the CORS allowlist in `app/main.py`, and omitting it
 | `GOOGLE_CLIENT_ID` | OAuth Client ID, used as the expected audience when validating Google ID tokens. Must match `VITE_GOOGLE_CLIENT_ID`. If unset, `/api/auth/google` fails closed with a 401. | Yes |
 | `FRONTEND_URL` | Public frontend origin, appended to the CORS allowlist | Yes (Prod) |
 | `ALLOWED_HOSTS` | Trusted Host allowlist, use `*` when behind a reverse proxy | No |
-| `SNIPER_INTERVAL_MINUTES` | Frequency of seat checks (default: 5) | No |
+| `SNIPER_PACER_START_RATE` | Requests per second the seat checker starts at (default: `0.75`) | No |
+| `SNIPER_PACER_MIN_RATE` | Floor the adaptive pacer will not back off below (default: `0.30`) | No |
+| `SNIPER_PACER_MAX_RATE` | Ceiling the adaptive pacer will not climb above (default: `0.90`) | No |
+| `SNIPER_PACER_RECOVERY_SECONDS` | Idle pause after Purdue throttles us (default: `12.0`) | No |
+| `SNIPER_COURSE_REFRESH_SECONDS` | How often the worker reloads the tracked-course queue (default: `300`) | No |
+| `SNIPER_SECTION_GONE_THRESHOLD` | Consecutive "No detailed class info" reads before a section is treated as cancelled (default: `3`) | No |
+| `SNIPER_DELISTED_RECHECK_SECONDS` | How often cancelled sections are rechecked for relisting (default: `3600`) | No |
+| `SNIPER_BACKOFF_MAX_SECONDS` | Ceiling for the circuit breaker's exponential backoff (default: `300`) | No |
 | `INVENTORY_CRON` | Cron schedule for full course scrape (default: `0 2 * * 0`, weekly Sunday at 2 AM) | No |
 | `CURRENT_TERM_CODE` | Default Purdue term code to scrape and search | No |
 | `CURRENT_TERM_NAME` | Display name for the default term | No |

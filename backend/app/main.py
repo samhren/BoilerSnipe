@@ -242,11 +242,14 @@ def get_course_by_crn(
     term_code: str = settings.CURRENT_TERM_CODE,
     db: Session = Depends(get_db)
 ):
-    """Get a specific course by CRN"""
+    """Get a specific course by CRN.
+
+    Delisted sections are returned rather than 404'd: a client that has one
+    tracked needs to see the cancellation, not a missing course.
+    """
     course = db.query(models.Course).filter(
         models.Course.crn == crn,
         models.Course.term_code == term_code,
-        models.Course.is_listed == True
     ).first()
     if not course:
         raise HTTPException(status_code=404, detail="Course not found")
@@ -474,12 +477,17 @@ def get_my_tracks(
     current_user: models.User = Depends(auth.get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get active tracks for current-term listed courses."""
+    """Get active tracks for the current term, cancelled sections included.
+
+    Delisted courses stay in this list on purpose. The sniper has stopped
+    checking them, so hiding them would make a tracked course vanish with no
+    explanation; the response carries `is_listed` and `delisted_at` so the
+    client can badge it and stop presenting its last seat count as live.
+    """
     tracks = db.query(models.Track).join(models.Course).filter(
         models.Track.user_id == current_user.id,
         models.Track.is_active == True,
         models.Course.term_code == settings.CURRENT_TERM_CODE,
-        models.Course.is_listed == True
     ).all()
     return tracks
 
@@ -534,37 +542,96 @@ def delete_track(
 
 
 # Health check
+#
+# Floor on the staleness budget, so a small tracked list does not produce an
+# unreasonably tight threshold that flaps on one backed-off stretch.
+STALENESS_FLOOR_SECONDS = 600.0
+
+
 @app.get("/api/health")
 def health_check(db: Session = Depends(get_db)):
     """Health check endpoint.
 
-    Reports how long ago the sniper last wrote a successful seat check. The API
-    and worker run as separate processes, so the shared database is the only
-    place that age is visible from here - and it is the signal that would have
-    surfaced the 2026-08-25 outage within minutes instead of a day.
+    The API and worker run as separate processes, so the shared database is the
+    only place the sniper's progress is visible from here.
+
+    The number that matters is the *oldest* successful check across tracked
+    courses, not the newest. A newest-check age of 20 seconds is compatible
+    with a queue that has starved half its courses for an hour; the oldest age
+    is exactly the "how out of date could my seat count be" that a user
+    experiences, and it is the signal that would have surfaced the 2026-08-25
+    outage within minutes instead of a day.
     """
-    last_checked = db.query(func.max(models.Course.last_checked)).filter(
+    rows = db.query(models.Course, func.min(models.Track.created_at)).join(
+        models.Track, models.Track.course_id == models.Course.id
+    ).filter(
+        models.Track.is_active == True,
         models.Course.term_code == settings.CURRENT_TERM_CODE,
-        models.Course.is_listed == True
-    ).scalar()
+        models.Course.is_listed == True,
+    ).group_by(models.Course.id).all()
 
-    age_seconds = None
-    if last_checked is not None:
-        now = datetime.now(last_checked.tzinfo)
-        age_seconds = max(0.0, (now - last_checked).total_seconds())
+    tracked_courses = [course for course, _ in rows]
 
-    # Stale once we have missed several sniper intervals, not just one, so a
-    # single slow or backed-off cycle does not flap the health signal.
-    stale_after = settings.SNIPER_INTERVAL_MINUTES * 60 * 4
-    sniper_healthy = age_seconds is not None and age_seconds <= stale_after
+    newest = None
+    oldest = None
+    never_checked = 0
+    never_checked_overdue = 0
+    for course, tracked_since in rows:
+        if course.last_checked is None:
+            never_checked += 1
+            # Only a course that has been tracked long enough to have been
+            # reached counts against health. A track created a minute ago has
+            # not been starved; CRN 24805, tracked for weeks and never once
+            # checked, had been.
+            if tracked_since is not None:
+                tracked_age = (datetime.now(tracked_since.tzinfo) - tracked_since).total_seconds()
+                if tracked_age > STALENESS_FLOOR_SECONDS:
+                    never_checked_overdue += 1
+            continue
+        if newest is None or course.last_checked > newest:
+            newest = course.last_checked
+        if oldest is None or course.last_checked < oldest:
+            oldest = course.last_checked
+
+    def age_of(moment):
+        if moment is None:
+            return None
+        return max(0.0, (datetime.now(moment.tzinfo) - moment).total_seconds())
+
+    newest_age = age_of(newest)
+    oldest_age = age_of(oldest)
+
+    # A full sweep at the pacer's floor rate takes roughly one request per
+    # course, so scale the staleness budget to how many courses are tracked and
+    # allow two sweeps before calling it stale. That keeps the signal from
+    # flapping on one slow or backed-off stretch while still tightening
+    # automatically as the tracked list grows.
+    expected_sweep_seconds = len(tracked_courses) / max(0.01, settings.SNIPER_PACER_MIN_RATE)
+    stale_after = max(STALENESS_FLOOR_SECONDS, expected_sweep_seconds * 2)
+
+    # A course tracked long enough to have been reached but never successfully
+    # checked is unmonitored, which is the exact condition CRN 24805 sat in for
+    # weeks. It is as much a failure as a stale one.
+    sniper_healthy = (
+        not tracked_courses
+        or (
+            never_checked_overdue == 0
+            and (oldest_age is None or oldest_age <= stale_after)
+        )
+    )
 
     return {
         "status": "healthy",
         "service": "boilersnipe",
         "sniper": {
             "healthy": sniper_healthy,
-            "last_successful_check": last_checked.isoformat() if last_checked else None,
-            "last_successful_check_age_seconds": age_seconds,
+            "tracked_courses": len(tracked_courses),
+            "never_checked": never_checked,
+            "never_checked_overdue": never_checked_overdue,
+            "last_successful_check": newest.isoformat() if newest else None,
+            "last_successful_check_age_seconds": newest_age,
+            "oldest_successful_check": oldest.isoformat() if oldest else None,
+            "oldest_successful_check_age_seconds": oldest_age,
             "stale_after_seconds": stale_after,
         },
     }
